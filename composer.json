@@ -1,0 +1,52 @@
+{
+    "name": "superbig/craft3-beam",
+    "description": "Generate CSVs and XLS files in your templates",
+    "type": "craft-plugin",
+    "version": "2.0.0",
+    "keywords": [
+        "craft",
+        "cms",
+        "craftcms",
+        "craft-plugin",
+        "beam"
+    ],
+    "support": {
+        "docs": "https://github.com/sjelfull/craft3-beam/blob/master/README.md",
+        "issues": "https://github.com/sjelfull/craft3-beam/issues"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Superbig",
+            "homepage": "https://superbig.co"
+        }
+    ],
+    "require": {
+        "craftcms/cms": "~3.0.0-beta.23",
+        "league/csv": "^8.2",
+		"mk-j/php_xlsxwriter": "^0.32.0"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+          "superbig\\beam\\": "src/"
+        }
+    },
+    "extra": {
+        "name": "Beam",
+        "handle": "beam",
+        "schemaVersion": "2.0.0",
+        "hasCpSettings": false,
+        "hasCpSection": false,
+        "changelogUrl": "https://raw.githubusercontent.com/sjelfull/craft3-beam/master/CHANGELOG.md",
+        "components": {
+            "beamService": "superbig\\beam\\services\\BeamService"
+        },
+        "class": "superbig\\beam\\Beam"
+    }
+}
