@@ -12,12 +12,15 @@ namespace superbig\beam\services;
 
 use craft\helpers\FileHelper;
 use craft\helpers\Path;
+use craft\helpers\StringHelper;
+use craft\helpers\UrlHelper;
 use superbig\beam\Beam;
 
 use Craft;
 use craft\base\Component;
 use League\Csv\Writer;
 use League\Csv\Reader;
+use superbig\beam\models\BeamModel;
 use XLSXWriter;
 use yii\web\Response;
 
@@ -31,43 +34,60 @@ class BeamService extends Component
     // Public Methods
     // =========================================================================
 
+    public function create($config = [])
+    {
+        $model = new BeamModel($config);
+
+        return $model;
+    }
+
     /**
-     * @param array $options
+     * @param BeamModel $model
      *
      * @return null
+     * @throws \League\Csv\CannotInsertRecord
      */
-    public function csv ($options = [])
+    public function csv(BeamModel $model)
     {
-        if ( empty($options['headers']) && empty($options['rows']) ) {
+        $header  = $model->header;
+        $content = $model->content;
+
+        if (empty($header) && empty($content)) {
             return null;
         }
-        // Load the CSV document from a string
-        $csv      = Writer::createFromString('');
-        $filename = !empty($options['filename']) ? $options['filename'] : 'output.csv';
-        if ( !empty($options['header']) ) {
-            // Insert the headers
-            $csv->insertOne($options['header']);
-        }
-        // Insert all the rows
-        $csv->insertAll($options['rows']);
 
-        $csv->output($filename);
+        $csv = Writer::createFromString('');
+
+        if (!empty($header)) {
+            $csv->insertOne($header);
+        }
+
+        $mimeType = 'text/csv';
+
+        // Insert all the rows
+        $csv->insertAll($content);
+        //$csv->output($model->getFilename('csv'));
+
+        $this->writeAndRedirect($csv->getContent(), $model->getFilename('csv'), $mimeType);
     }
 
     /**
      * @param array $options
      *
      * @return null
+     * @throws \yii\base\Exception
      */
-    public function xlsx ($options = [])
+    public function xlsx(BeamModel $model)
     {
         $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
+        $header   = $model->header;
+        $content  = $model->content;
 
-        if ( empty($options['headers']) && empty($options['rows']) ) {
+        if (empty($header) && empty($content)) {
             return null;
         }
 
-        if ( !file_exists($tempPath) && !is_dir($tempPath) ) {
+        if (!file_exists($tempPath) && !is_dir($tempPath)) {
             FileHelper::createDirectory($tempPath);
         }
 
@@ -76,9 +96,9 @@ class BeamService extends Component
         $filename  = !empty($options['filename']) ? $options['filename'] : 'output.xlsx';
         $sheetName = isset($options['sheetName']) ? $options['sheetName'] : 'Sheet';
 
-        if ( !empty($options['header']) ) {
+        if (!empty($header)) {
             $headers = [];
-            foreach ($options['header'] as $header) {
+            foreach ($header as $header) {
                 $headers[ $header ] = 'string';
             }
             // Insert the headers
@@ -87,14 +107,71 @@ class BeamService extends Component
 
         $filename = filter_var($filename, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW);
 
-        foreach ($options['rows'] as $row) {
+        foreach ($content as $row) {
             $writer->writeSheetRow($sheetName, $row);
         }
 
-        $writer->writeToFile($tempPath . $filename);
+        $mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        $this->writeAndRedirect($writer->writeToString(), $model->getFilename('xlsx'), $mimeType);
+    }
 
-        //$mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    public function downloadHash($fileHash = null)
+    {
+        $hash = Craft::$app->getSecurity()->validateData($fileHash);
 
-        Craft::$app->response->sendFile($tempPath . $filename, $filename);
+        if (!$hash) {
+            return false;
+        }
+        $config = $this->unhashConfig($hash);
+
+        $config['path'] = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR . $config['tempFilename'];
+
+        return $config;
+    }
+
+    private function writeAndRedirect($content, $filename, $mimeType)
+    {
+        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
+        $tempFilename = StringHelper::randomString(12) . "-{$filename}";
+        $config       = [
+            'filename'     => $filename,
+            'tempFilename' => $tempFilename,
+            'mimeType' => $mimeType,
+        ];
+
+        $hashConfig = $this->hashConfig($config);
+        $verifyHash = Craft::$app->getSecurity()->hashData($hashConfig);
+        $url = UrlHelper::url('beam/download', [
+            'hash'    => $verifyHash,
+        ]);
+
+        FileHelper::writeToFile($tempPath . $tempFilename, $content);
+
+        Craft::$app->getResponse()->redirect($url);
+
+        return Craft::$app->end();
+    }
+
+    public function hashConfig($config = [])
+    {
+        $string = implode('||', $config);
+
+        return base64_encode($string);
+    }
+
+    public function unhashConfig(string $hash)
+    {
+        $config = base64_decode($hash);
+        $config = explode('||', $config);
+
+        list ($filename, $tempFilename, $mimeType) = $config;
+
+        $config = [
+            'filename'     => $filename,
+            'tempFilename' => $tempFilename,
+            'mimeType' => $mimeType,
+        ];
+
+        return $config;
     }
 }

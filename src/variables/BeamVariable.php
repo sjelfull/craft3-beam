@@ -29,18 +29,8 @@ class BeamVariable
      *
      * @return null
      */
-    public function csv ($options = [])
+    public function create ($options = [])
     {
-        return Beam::$plugin->beamService->csv($options);
-    }
-
-    /**
-     * @param array $options
-     *
-     * @return null
-     */
-    public function xlsx ($options = [])
-    {
-        return Beam::$plugin->beamService->xlsx($options);
+        return Beam::$plugin->beamService->create($options);
     }
 }
