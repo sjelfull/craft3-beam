@@ -24,36 +24,67 @@ To install the plugin, follow these instructions.
 
 ## Using Beam
 
-To generate an CSV:
+The starting point when working with Beam is to create a instance:
 
 ```twig
-{% spaceless %}
 {% set options = {
     header: ['Email', 'Name'],
-    rows: [
+    content: [
         [ 'test@example.com', 'John Doe' ],
         [ 'another+test@example.com', 'Jane Doe' ],
         [ 'third+test@example.com', 'Trond Johansen' ],
     ]
 } %}
-{{ craft.beam.csv(options) }}
-{% endspaceless %}
+{% set beam = craft.beam.create(options) %}
+```
+
+This will return a `BeamModel` behind the scenes.
+
+If you want to append content dynamically, say from a loop, you can use the `append` method:
+
+```twig
+{% set myUserQuery = craft.users()
+    .group('authors') %}
+
+{# Fetch the users #}
+{% set users = myUserQuery.all() %}
+
+{# Display the list #}
+{% for user in users %}
+    {% do beam.append([user.username, user.name, user.email]) %}
+{% endfor %}
+```
+
+To generate an CSV:
+```twig
+{% do beam.csv() %}
 ```
 
 To generate an XLSX:
-
 ```twig
-{% spaceless %}
-{% set options = {
-    header: ['Email', 'Name'],
-    rows: [
-        [ 'test@example.com', 'John Doe' ],
-        [ 'another+test@example.com', 'Jane Doe' ],
-        [ 'third+test@example.com', 'Trond Johansen' ],
-    ]
-} %}
-{{ craft.beam.xlsx(options) }}
-{% endspaceless %}
+{% do beam.xlsx() %}
 ```
+
+### Changing config on the fly
+
+To set the header of the file (the first row):
+```twig
+{% do beam.setHeader([ 'Username', 'Name', 'Email' ]) %}
+``` 
+
+To set the filename:
+```twig
+{% set currentDate = now|date('Y-m-d') %}
+{% do beam.setFilename('report-#{currentDate}') %}
+```
+
+To overwrite the content:
+```twig
+{% do beam.setContent([
+    [ 'test@example.com', 'John Doe' ],
+    [ 'another+test@example.com', 'Jane Doe' ],
+    [ 'third+test@example.com', 'Trond Johansen' ],
+]) %}
+``` 
 
 Brought to you by [Superbig](https://superbig.co)
