@@ -72,7 +72,7 @@ class BeamService extends Component
     }
 
     /**
-     * @param array $options
+     * @param BeamModel $model
      *
      * @return null
      * @throws \yii\base\Exception
@@ -93,8 +93,7 @@ class BeamService extends Component
 
         // Load the CSV document from a string
         $writer    = new XLSXWriter();
-        $filename  = !empty($options['filename']) ? $options['filename'] : 'output.xlsx';
-        $sheetName = isset($options['sheetName']) ? $options['sheetName'] : 'Sheet';
+        $sheetName = !empty($model->sheetName) ? $model->sheetName : 'Sheet';
 
         if (!empty($header)) {
             $headers = [];
@@ -104,8 +103,6 @@ class BeamService extends Component
             // Insert the headers
             $writer->writeSheetHeader($sheetName, $headers);
         }
-
-        $filename = filter_var($filename, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW);
 
         foreach ($content as $row) {
             $writer->writeSheetRow($sheetName, $row);
@@ -152,14 +149,14 @@ class BeamService extends Component
         return Craft::$app->end();
     }
 
-    public function hashConfig($config = [])
+    public function hashConfig($config = []): string
     {
         $string = implode('||', $config);
 
         return base64_encode($string);
     }
 
-    public function unhashConfig(string $hash)
+    public function unhashConfig(string $hash): array
     {
         $config = base64_decode($hash);
         $config = explode('||', $config);

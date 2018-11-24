@@ -37,6 +37,9 @@ class BeamModel extends Model
     /**  @var string */
     public $filename = 'output';
 
+    /**  @var string */
+    public $sheetName = 'Sheet';
+
     // Public Methods
     // =========================================================================
 
@@ -102,6 +105,13 @@ class BeamModel extends Model
         $filename = pathinfo(filter_var($this->filename, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW), PATHINFO_FILENAME);
 
         return "$filename.$ext";
+    }
+
+    public function setFilename($filename = null)
+    {
+        $this->filename = $filename;
+
+        return $this;
     }
 
     public function csv($filename = null)
