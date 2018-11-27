@@ -66,8 +66,6 @@ class BeamService extends Component
 
         // Insert all the rows
         $csv->insertAll($content);
-        //$csv->output($model->getFilename('csv'));
-
         $this->writeAndRedirect($csv->getContent(), $model->getFilename('csv'), $mimeType);
     }
 
