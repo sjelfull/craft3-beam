@@ -66,7 +66,11 @@ class BeamService extends Component
 
         // Insert all the rows
         $csv->insertAll($content);
-        $this->writeAndRedirect($csv->getContent(), $model->getFilename('csv'), $mimeType);
+
+        // @todo Remove this once all plugins is using 9.0
+        $content = method_exists($csv, 'getContent') ? $csv->getContent() : (string)$csv;
+
+        $this->writeAndRedirect($content, $model->getFilename('csv'), $mimeType);
     }
 
     /**
@@ -126,18 +130,18 @@ class BeamService extends Component
 
     private function writeAndRedirect($content, $filename, $mimeType)
     {
-        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
+        $tempPath     = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
         $tempFilename = StringHelper::randomString(12) . "-{$filename}";
         $config       = [
             'filename'     => $filename,
             'tempFilename' => $tempFilename,
-            'mimeType' => $mimeType,
+            'mimeType'     => $mimeType,
         ];
 
         $hashConfig = $this->hashConfig($config);
         $verifyHash = Craft::$app->getSecurity()->hashData($hashConfig);
-        $url = UrlHelper::url('beam/download', [
-            'hash'    => $verifyHash,
+        $url        = UrlHelper::url('beam/download', [
+            'hash' => $verifyHash,
         ]);
 
         FileHelper::writeToFile($tempPath . $tempFilename, $content);
@@ -164,7 +168,7 @@ class BeamService extends Component
         $config = [
             'filename'     => $filename,
             'tempFilename' => $tempFilename,
-            'mimeType' => $mimeType,
+            'mimeType'     => $mimeType,
         ];
 
         return $config;
