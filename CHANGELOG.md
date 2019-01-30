@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.1.2 - 2019-01-30
+### Fixed
+- Fixed exception when league/csv 8.x is installed
+
 ## 2.1.1 - 2019-01-05
 ### Changed
 - Changed league/csv dependency to not conflict with Feed Me
