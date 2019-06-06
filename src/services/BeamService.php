@@ -140,7 +140,7 @@ class BeamService extends Component
 
         $hashConfig = $this->hashConfig($config);
         $verifyHash = Craft::$app->getSecurity()->hashData($hashConfig);
-        $url        = UrlHelper::url('beam/download', [
+        $url        = UrlHelper::siteUrl('beam/download', [
             'hash' => $verifyHash,
         ]);
 
