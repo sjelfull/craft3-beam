@@ -57,6 +57,7 @@ class BeamService extends Component
         }
 
         $csv = Writer::createFromString('');
+        $csv->setOutputBOM(Writer::BOM_UTF8);
 
         if (!empty($header)) {
             $csv->insertOne($header);
