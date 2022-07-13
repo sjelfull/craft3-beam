@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+### Unreleased
+
+### Added
+- Craft 4 support
+
 ## 2.1.5 - 2020-01-27
 ### Added
 - Added BOM sequence to improve interoperability with programs interacting with CSV, like Microsoft Excel. ([#13](https://github.com/sjelfull/craft3-beam/pull/13))

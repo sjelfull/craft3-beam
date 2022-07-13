@@ -43,7 +43,7 @@ class BeamModel extends Model
     // Public Methods
     // =========================================================================
 
-    public function init()
+    public function init(): void
     {
         parent::init();
 
@@ -140,7 +140,7 @@ class BeamModel extends Model
     /**
      * @inheritdoc
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             ['filename', 'string'],
