@@ -4,11 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
-### Unreleased
+## 3.0.0 - 2022-10-03
 
 ### Added
 - Craft 4 support
 - Support for formatting cell values
+
+### Fixed
+- Fixes PHP deprecation notice
+
+### Changed
+- Updated `mk-j/php_xlsxwriter` to ^0.38.0
 
 ## 2.1.5 - 2020-01-27
 ### Added
