@@ -60,6 +60,7 @@ class BeamService extends Component
         $csv->setOutputBOM(Writer::BOM_UTF8);
 
         if (!empty($header)) {
+            $headerValues = array_map(fn($value) => is_array($value) ? $value['text'] ?? 'No text set' : $value, $header);
             $csv->insertOne($header);
         }
 
@@ -101,7 +102,13 @@ class BeamService extends Component
         if (!empty($header)) {
             $headers = [];
             foreach ($header as $header) {
-                $headers[ $header ] = 'string';
+                if (is_array($header)) {
+                    $text = $header['text'] ?? 'No text set';
+                    $type = $this->normalizeCellFormat($header['type'] ?? 'string');
+                    $headers[ $text ] = $type;
+                } else {
+                    $headers[ $header ] = 'string';
+                }
             }
             // Insert the headers
             $writer->writeSheetHeader($sheetName, $headers);
@@ -173,5 +180,20 @@ class BeamService extends Component
         ];
 
         return $config;
+    }
+
+    private function normalizeCellFormat(string $type) {
+        $types = [
+            'number' => 'integer',
+            'date' => 'date',
+            'datetime' => 'datetime',
+            'time' => 'time',
+            'dollar' => 'dollar',
+            'euro' => 'euro',
+            'price' => 'price',
+            'string' => 'string',
+        ];
+
+        return $types[$type] ?? 'string';
     }
 }

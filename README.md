@@ -55,12 +55,12 @@ If you want to append content dynamically, say from a loop, you can use the `app
 {% endfor %}
 ```
 
-To generate an CSV:
+### To generate an CSV:
 ```twig
 {% do beam.csv() %}
 ```
 
-To generate an XLSX:
+### To generate an XLSX:
 ```twig
 {% do beam.xlsx() %}
 ```
@@ -85,6 +85,35 @@ To overwrite the content:
     [ 'another+test@example.com', 'Jane Doe' ],
     [ 'third+test@example.com', 'Trond Johansen' ],
 ]) %}
-``` 
+```
+
+### Custom cell formatting is supported for XLSX:
+
+```twig
+{% set options = {
+    header: ['Email', 'Name', { text: 'Number', type: 'number' }, { text: 'Date', type: 'date' }],
+    content: [
+        [ 'test@example.com', 'John Doe', 100000, '2022-06-10'],
+        [ 'another+test@example.com', 'Jane Doe', 252323, '2022-06-22'],
+        [ 'third+test@example.com', 'Trond Johansen', 30, '2022-06-22'],
+        [ 'third+test@example.com', 'Trond Johansen', 6233, '2023-06-22'],
+    ]
+} %}
+{% set beam = craft.beam.create(options) %}
+{%  do beam.xlsx() %}
+```
+
+These types are supported:
+
+| Format Type | Maps to the following cell format         |
+|-------------|-------------------------------------------|
+| string      | @                                         |
+| integer     | 0                                         |
+| date        | YYYY-MM-DD                                |
+| datetime    | YYYY-MM-DD HH:MM:SS                       |
+| time        | HH:MM:SS                                  |
+| price       | #,##0.00                                  |
+| dollar      | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
+| euro        | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
 
 Brought to you by [Superbig](https://superbig.co)

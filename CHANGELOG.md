@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 - Craft 4 support
+- Support for formatting cell values
 
 ## 2.1.5 - 2020-01-27
 ### Added
