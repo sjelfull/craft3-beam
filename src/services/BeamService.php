@@ -22,6 +22,11 @@ use League\Csv\Writer;
 use League\Csv\Reader;
 use superbig\beam\models\BeamModel;
 use XLSXWriter;
+use yii\base\ErrorException;
+use yii\base\Exception;
+use yii\base\ExitException;
+use yii\base\InvalidConfigException;
+use yii\base\InvalidRouteException;
 use yii\web\Response;
 
 /**
@@ -31,9 +36,6 @@ use yii\web\Response;
  */
 class BeamService extends Component
 {
-    // Public Methods
-    // =========================================================================
-
     public function create($config = [])
     {
         $model = new BeamModel($config);
@@ -44,16 +46,16 @@ class BeamService extends Component
     /**
      * @param BeamModel $model
      *
-     * @return null
+     * @return void
      * @throws \League\Csv\CannotInsertRecord
      */
-    public function csv(BeamModel $model)
+    public function csv(BeamModel $model): void
     {
         $header  = $model->header;
         $content = $model->content;
 
         if (empty($header) && empty($content)) {
-            return null;
+            return;
         }
 
         $csv = Writer::createFromString('');
@@ -76,19 +78,20 @@ class BeamService extends Component
     }
 
     /**
-     * @param BeamModel $model
-     *
-     * @return null
-     * @throws \yii\base\Exception
+     * @throws ErrorException
+     * @throws Exception
+     * @throws ExitException
+     * @throws InvalidConfigException
+     * @throws InvalidRouteException
      */
-    public function xlsx(BeamModel $model)
+    public function xlsx(BeamModel $model): void
     {
         $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
         $header   = $model->header;
         $content  = $model->content;
 
         if (empty($header) && empty($content)) {
-            return null;
+            return;
         }
 
         if (!file_exists($tempPath) && !is_dir($tempPath)) {
@@ -122,13 +125,20 @@ class BeamService extends Component
         $this->writeAndRedirect($writer->writeToString(), $model->getFilename('xlsx'), $mimeType);
     }
 
-    public function downloadHash($fileHash = null)
+    /**
+     * @param $fileHash
+     * @return array|bool
+     * @throws Exception
+     * @throws InvalidConfigException
+     */
+    public function downloadHash($fileHash = null): array | bool
     {
         $hash = Craft::$app->getSecurity()->validateData($fileHash);
 
         if (!$hash) {
             return false;
         }
+
         $config = $this->unhashConfig($hash);
 
         $config['path'] = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR . $config['tempFilename'];
@@ -136,7 +146,14 @@ class BeamService extends Component
         return $config;
     }
 
-    private function writeAndRedirect($content, $filename, $mimeType)
+    /**
+     * @throws InvalidRouteException
+     * @throws InvalidConfigException
+     * @throws ErrorException
+     * @throws Exception
+     * @throws ExitException
+     */
+    private function writeAndRedirect(string $content, string $filename, string $mimeType): void
     {
         $tempPath     = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
         $tempFilename = StringHelper::randomString(12) . "-{$filename}";
@@ -156,7 +173,7 @@ class BeamService extends Component
 
         Craft::$app->getResponse()->redirect($url);
 
-        return Craft::$app->end();
+        Craft::$app->end();
     }
 
     public function hashConfig($config = []): string
@@ -182,7 +199,7 @@ class BeamService extends Component
         return $config;
     }
 
-    private function normalizeCellFormat(string $type) {
+    private function normalizeCellFormat(string $type): string {
         $types = [
             'number' => 'integer',
             'date' => 'date',
