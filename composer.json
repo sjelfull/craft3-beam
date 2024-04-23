@@ -2,7 +2,7 @@
     "name": "superbig/craft3-beam",
     "description": "Generate CSVs and XLS files in your templates",
     "type": "craft-plugin",
-    "version": "3.0.0",
+    "version": "5.0.0",
     "keywords": [
         "craft",
         "cms",
