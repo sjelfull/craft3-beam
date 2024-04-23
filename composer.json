@@ -26,6 +26,11 @@
         "league/csv": "^8.1|^9.0",
 		"mk-j/php_xlsxwriter": "^0.38.0"
     },
+    "require-dev": {
+        "craftcms/ecs": "dev-main",
+        "craftcms/phpstan": "dev-main",
+        "craftcms/rector": "dev-main"
+    },
     "repositories": [
         {
             "type": "composer",
