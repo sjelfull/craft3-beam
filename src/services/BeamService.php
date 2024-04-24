@@ -10,16 +10,14 @@
 
 namespace superbig\beam\services;
 
-use craft\helpers\FileHelper;
-use craft\helpers\Path;
-use craft\helpers\StringHelper;
-use craft\helpers\UrlHelper;
-use superbig\beam\Beam;
-
 use Craft;
 use craft\base\Component;
+use craft\helpers\FileHelper;
+use craft\helpers\StringHelper;
+
+use craft\helpers\UrlHelper;
 use League\Csv\Writer;
-use League\Csv\Reader;
+use superbig\beam\Beam;
 use superbig\beam\models\BeamModel;
 use XLSXWriter;
 use yii\base\ErrorException;
@@ -27,7 +25,6 @@ use yii\base\Exception;
 use yii\base\ExitException;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidRouteException;
-use yii\web\Response;
 
 /**
  * @author    Superbig
@@ -51,7 +48,7 @@ class BeamService extends Component
      */
     public function csv(BeamModel $model): void
     {
-        $header  = $model->header;
+        $header = $model->header;
         $content = $model->content;
 
         if (empty($header) && empty($content)) {
@@ -87,8 +84,8 @@ class BeamService extends Component
     public function xlsx(BeamModel $model): void
     {
         $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
-        $header   = $model->header;
-        $content  = $model->content;
+        $header = $model->header;
+        $content = $model->content;
 
         if (empty($header) && empty($content)) {
             return;
@@ -99,7 +96,7 @@ class BeamService extends Component
         }
 
         // Load the CSV document from a string
-        $writer    = new XLSXWriter();
+        $writer = new XLSXWriter();
         $sheetName = !empty($model->sheetName) ? $model->sheetName : 'Sheet';
 
         if (!empty($header)) {
@@ -155,17 +152,17 @@ class BeamService extends Component
      */
     private function writeAndRedirect(string $content, string $filename, string $mimeType): void
     {
-        $tempPath     = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
+        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
         $tempFilename = StringHelper::randomString(12) . "-{$filename}";
-        $config       = [
-            'filename'     => $filename,
+        $config = [
+            'filename' => $filename,
             'tempFilename' => $tempFilename,
-            'mimeType'     => $mimeType,
+            'mimeType' => $mimeType,
         ];
 
         $hashConfig = $this->hashConfig($config);
         $verifyHash = Craft::$app->getSecurity()->hashData($hashConfig);
-        $url        = UrlHelper::siteUrl('beam/download', [
+        $url = UrlHelper::siteUrl('beam/download', [
             'hash' => $verifyHash,
         ]);
 
@@ -188,18 +185,19 @@ class BeamService extends Component
         $config = base64_decode($hash);
         $config = explode('||', $config);
 
-        list ($filename, $tempFilename, $mimeType) = $config;
+        list($filename, $tempFilename, $mimeType) = $config;
 
         $config = [
-            'filename'     => $filename,
+            'filename' => $filename,
             'tempFilename' => $tempFilename,
-            'mimeType'     => $mimeType,
+            'mimeType' => $mimeType,
         ];
 
         return $config;
     }
 
-    private function normalizeCellFormat(string $type): string {
+    private function normalizeCellFormat(string $type): string
+    {
         $types = [
             'number' => 'integer',
             'date' => 'date',

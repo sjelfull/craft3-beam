@@ -10,10 +10,9 @@
 
 namespace superbig\beam\models;
 
-use superbig\beam\Beam;
-
-use Craft;
 use craft\base\Model;
+
+use superbig\beam\Beam;
 
 /**
  * @author    Superbig
@@ -71,7 +70,7 @@ class BeamModel extends Model
     {
         return [
             'header' => $this->header,
-            'rows'   => $this->content,
+            'rows' => $this->content,
         ];
     }
 
