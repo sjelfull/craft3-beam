@@ -42,6 +42,11 @@
           "superbig\\beam\\": "src/"
         }
     },
+    "scripts": {
+        "phpstan": "phpstan --ansi --memory-limit=1G",
+        "check-cs": "ecs check --ansi",
+        "fix-cs": "ecs check --fix --ansi"
+    },
     "extra": {
         "name": "Beam",
         "handle": "beam",
