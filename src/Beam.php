@@ -10,16 +10,14 @@
 
 namespace superbig\beam;
 
-use superbig\beam\services\BeamService as BeamServiceService;
-use superbig\beam\variables\BeamVariable;
-
 use Craft;
 use craft\base\Plugin;
-use craft\services\Plugins;
-use craft\events\PluginEvent;
-use craft\web\UrlManager;
-use craft\web\twig\variables\CraftVariable;
+
 use craft\events\RegisterUrlRulesEvent;
+use craft\web\twig\variables\CraftVariable;
+use craft\web\UrlManager;
+use superbig\beam\services\BeamService as BeamServiceService;
+use superbig\beam\variables\BeamVariable;
 
 use yii\base\Event;
 
@@ -56,7 +54,7 @@ class Beam extends Plugin
         Event::on(
             UrlManager::class,
             UrlManager::EVENT_REGISTER_SITE_URL_RULES,
-            function (RegisterUrlRulesEvent $event) {
+            function(RegisterUrlRulesEvent $event) {
                 $event->rules['beam/download'] = 'beam/default';
             }
         );
@@ -64,7 +62,7 @@ class Beam extends Plugin
         Event::on(
             UrlManager::class,
             UrlManager::EVENT_REGISTER_CP_URL_RULES,
-            function (RegisterUrlRulesEvent $event) {
+            function(RegisterUrlRulesEvent $event) {
                 $event->rules['beam/download'] = 'beam/default';
             }
         );
@@ -72,7 +70,7 @@ class Beam extends Plugin
         Event::on(
             CraftVariable::class,
             CraftVariable::EVENT_INIT,
-            function (Event $event) {
+            function(Event $event) {
                 /** @var CraftVariable $variable */
                 $variable = $event->sender;
                 $variable->set('beam', BeamVariable::class);

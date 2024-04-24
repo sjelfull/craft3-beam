@@ -10,10 +10,10 @@
 
 namespace superbig\beam\controllers;
 
-use superbig\beam\Beam;
-
 use Craft;
+
 use craft\web\Controller;
+use superbig\beam\Beam;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -23,19 +23,7 @@ use yii\web\NotFoundHttpException;
  */
 class DefaultController extends Controller
 {
-
-    // Protected Properties
-    // =========================================================================
-
-    /**
-     * @var    bool|array Allows anonymous access to this controller's actions.
-     *         The actions must be in 'kebab-case'
-     * @access protected
-     */
     protected array|int|bool $allowAnonymous = ['index'];
-
-    // Public Methods
-    // =========================================================================
 
     /**
      * @return mixed
@@ -45,7 +33,7 @@ class DefaultController extends Controller
     public function actionIndex()
     {
         $request = Craft::$app->getRequest();
-        $hash    = $request->getRequiredParam('hash');
+        $hash = $request->getRequiredParam('hash');
 
         $config = Beam::$plugin->beamService->downloadHash($hash);
 
@@ -53,7 +41,7 @@ class DefaultController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $path     = $config['path'];
+        $path = $config['path'];
         $filename = $config['filename'];
 
         return Craft::$app->getResponse()->sendFile($path, $filename, [

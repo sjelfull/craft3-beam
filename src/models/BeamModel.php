@@ -10,10 +10,9 @@
 
 namespace superbig\beam\models;
 
-use superbig\beam\Beam;
-
-use Craft;
 use craft\base\Model;
+
+use superbig\beam\Beam;
 
 /**
  * @author    Superbig
@@ -22,26 +21,11 @@ use craft\base\Model;
  */
 class BeamModel extends Model
 {
-    // Public Properties
-    // =========================================================================
-
-    /**  @var array */
-    public $header = [];
-
-    /**  @var array */
-    public $content = [];
-
-    /**  @var array */
-    public $rows = [];
-
-    /**  @var string */
-    public $filename = 'output';
-
-    /**  @var string */
-    public $sheetName = 'Sheet';
-
-    // Public Methods
-    // =========================================================================
+    public array $header = [];
+    public array $content = [];
+    public array $rows = [];
+    public string $filename = 'output';
+    public string $sheetName = 'Sheet';
 
     public function init(): void
     {
@@ -52,12 +36,7 @@ class BeamModel extends Model
         }
     }
 
-    /**
-     * @param array $content
-     *
-     * @return $this
-     */
-    public function append(array $content = [])
+    public function append(array $content = []): static
     {
         if (isset($content[0]) && !\is_array($content[0])) {
             $content = [$content];
@@ -68,35 +47,30 @@ class BeamModel extends Model
         return $this;
     }
 
-    public function setHeader($headers = [])
+    public function setHeader(array $headers = []): static
     {
         $this->header = $headers;
 
         return $this;
     }
 
-    public function getContent()
+    public function getContent(): array
     {
         return $this->content;
     }
 
-    /**
-     * @param $content
-     *
-     * @return $this
-     */
-    public function setContent($content)
+    public function setContent(array $content): static
     {
         $this->content = $content;
 
         return $this;
     }
 
-    public function getConfig()
+    public function getConfig(): array
     {
         return [
             'header' => $this->header,
-            'rows'   => $this->content,
+            'rows' => $this->content,
         ];
     }
 
@@ -107,39 +81,31 @@ class BeamModel extends Model
         return "$filename.$ext";
     }
 
-    public function setFilename($filename = null)
+    public function setFilename($filename = null): static
     {
         $this->filename = $filename;
 
         return $this;
     }
 
-    public function csv($filename = null)
+    public function csv($filename = null): void
     {
         if ($filename) {
             $this->filename = $filename;
         }
 
-        return Beam::$plugin->beamService->csv($this);
+        Beam::$plugin->beamService->csv($this);
     }
 
-    public function xlsx($filename = null)
+    public function xlsx($filename = null): void
     {
         if ($filename) {
             $this->filename = $filename;
         }
 
-        return Beam::$plugin->beamService->xlsx($this);
+        Beam::$plugin->beamService->xlsx($this);
     }
 
-    public function html()
-    {
-
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function rules(): array
     {
         return [

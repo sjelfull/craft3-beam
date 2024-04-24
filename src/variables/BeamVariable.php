@@ -12,8 +12,6 @@ namespace superbig\beam\variables;
 
 use superbig\beam\Beam;
 
-use Craft;
-
 /**
  * @author    Superbig
  * @package   Beam
@@ -29,7 +27,7 @@ class BeamVariable
      *
      * @return null
      */
-    public function create ($options = [])
+    public function create($options = [])
     {
         return Beam::$plugin->beamService->create($options);
     }

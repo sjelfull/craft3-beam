@@ -75,7 +75,7 @@ To set the header of the file (the first row):
 To set the filename:
 ```twig
 {% set currentDate = now|date('Y-m-d') %}
-{% do beam.setFilename('report-#{currentDate}') %}
+{% do beam.setFilename("report-#{currentDate}") %}
 ```
 
 To overwrite the content:
