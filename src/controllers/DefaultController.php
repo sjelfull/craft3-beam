@@ -44,15 +44,15 @@ class DefaultController extends Controller
         $path = $config['path'];
         $filename = $config['filename'];
 
-        $response = Craft::$app->getResponse()->sendFile($path, $filename, [
+        // Register shutdown function to clean up the temporary file after the response is sent
+        register_shutdown_function(function() use ($path) {
+            if (file_exists($path)) {
+                @unlink($path);
+            }
+        });
+
+        return Craft::$app->getResponse()->sendFile($path, $filename, [
             'mimeType' => $config['mimeType'],
         ]);
-
-        // Clean up the temporary file after sending
-        if (file_exists($path)) {
-            @unlink($path);
-        }
-
-        return $response;
     }
 }
