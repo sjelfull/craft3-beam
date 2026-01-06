@@ -12,6 +12,8 @@ namespace superbig\beam\services;
 
 use Craft;
 use craft\base\Component;
+use craft\base\Fs;
+use craft\base\FsInterface;
 use craft\helpers\FileHelper;
 use craft\helpers\StringHelper;
 
@@ -83,7 +85,6 @@ class BeamService extends Component
      */
     public function xlsx(BeamModel $model): void
     {
-        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
         $header = $model->header;
         $content = $model->content;
 
@@ -91,8 +92,12 @@ class BeamService extends Component
             return;
         }
 
-        if (!file_exists($tempPath) && !is_dir($tempPath)) {
-            FileHelper::createDirectory($tempPath);
+        // Create temp directory if using local storage
+        if (!$this->useFilesystemStorage()) {
+            $tempPath = $this->getTempPath();
+            if (!file_exists($tempPath) && !is_dir($tempPath)) {
+                FileHelper::createDirectory($tempPath);
+            }
         }
 
         // Load the CSV document from a string
@@ -138,7 +143,14 @@ class BeamService extends Component
 
         $config = $this->unhashConfig($hash);
 
-        $config['path'] = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR . $config['tempFilename'];
+        // Determine the path based on storage type
+        if ($this->useFilesystemStorage()) {
+            $config['path'] = null; // Will be read from filesystem
+            $config['useFilesystem'] = true;
+        } else {
+            $config['path'] = $this->getTempPath() . $config['tempFilename'];
+            $config['useFilesystem'] = false;
+        }
 
         return $config;
     }
@@ -152,7 +164,6 @@ class BeamService extends Component
      */
     private function writeAndRedirect(string $content, string $filename, string $mimeType): void
     {
-        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
         $tempFilename = StringHelper::randomString(12) . "-{$filename}";
         $config = [
             'filename' => $filename,
@@ -166,7 +177,13 @@ class BeamService extends Component
             'hash' => $verifyHash,
         ]);
 
-        FileHelper::writeToFile($tempPath . $tempFilename, $content);
+        // Write the file based on storage type
+        if ($this->useFilesystemStorage()) {
+            $this->writeToFilesystem($tempFilename, $content);
+        } else {
+            $tempPath = $this->getTempPath();
+            FileHelper::writeToFile($tempPath . $tempFilename, $content);
+        }
 
         Craft::$app->getResponse()->redirect($url);
 
@@ -210,5 +227,105 @@ class BeamService extends Component
         ];
 
         return $types[$type] ?? 'string';
+    }
+
+    /**
+     * Check if filesystem storage is configured
+     */
+    private function useFilesystemStorage(): bool
+    {
+        $settings = Beam::$plugin->getSettings();
+        return !empty($settings->tempFilesystemHandle);
+    }
+
+    /**
+     * Get the configured filesystem
+     * @throws InvalidConfigException
+     */
+    private function getFilesystem(): ?FsInterface
+    {
+        $settings = Beam::$plugin->getSettings();
+        
+        if (empty($settings->tempFilesystemHandle)) {
+            return null;
+        }
+
+        $volume = Craft::$app->getVolumes()->getVolumeByHandle($settings->tempFilesystemHandle);
+        
+        if (!$volume) {
+            throw new InvalidConfigException("Filesystem volume with handle '{$settings->tempFilesystemHandle}' not found.");
+        }
+
+        return $volume->getFs();
+    }
+
+    /**
+     * Get the temp path for local storage
+     */
+    private function getTempPath(): string
+    {
+        return Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
+    }
+
+    /**
+     * Get the subfolder path within the filesystem
+     */
+    private function getFilesystemSubfolder(): string
+    {
+        $settings = Beam::$plugin->getSettings();
+        return rtrim($settings->tempSubfolder ?? 'beam', '/') . '/';
+    }
+
+    /**
+     * Write content to the configured filesystem
+     * @throws InvalidConfigException
+     */
+    private function writeToFilesystem(string $filename, string $content): void
+    {
+        $fs = $this->getFilesystem();
+        $path = $this->getFilesystemSubfolder() . $filename;
+        
+        $stream = fopen('php://temp', 'r+');
+        fwrite($stream, $content);
+        rewind($stream);
+        
+        $fs->writeFileFromStream($path, $stream, []);
+        
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
+    }
+
+    /**
+     * Read content from the configured filesystem
+     * @throws InvalidConfigException
+     */
+    public function readFromFilesystem(string $filename): string
+    {
+        $fs = $this->getFilesystem();
+        $path = $this->getFilesystemSubfolder() . $filename;
+        
+        $stream = $fs->getFileStream($path);
+        $content = stream_get_contents($stream);
+        
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
+        
+        return $content;
+    }
+
+    /**
+     * Delete file from the configured filesystem
+     * @throws InvalidConfigException
+     */
+    public function deleteFromFilesystem(string $filename): void
+    {
+        $fs = $this->getFilesystem();
+        $path = $this->getFilesystemSubfolder() . $filename;
+        
+        if ($fs->fileExists($path)) {
+            $fs->deleteFile($path);
+        }
     }
 }

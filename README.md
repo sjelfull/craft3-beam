@@ -116,4 +116,44 @@ These types are supported:
 | dollar      | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
 | euro        | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
 
+## Configuration for Load-Balanced Environments
+
+If you're running your site on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), temporary files stored on the local filesystem may not be accessible when subsequent requests hit different servers. This can cause intermittent download failures.
+
+To solve this, Beam allows you to configure a shared filesystem volume for temporary file storage.
+
+### Setting up Shared Filesystem Storage
+
+1. First, create a filesystem volume in Craft CMS (Settings → Filesystems) that uses a cloud storage service like Amazon S3, Google Cloud Storage, or similar. Make sure this filesystem is accessible by all servers in your load-balanced environment.
+
+2. Go to Settings → Plugins → Beam → Settings
+
+3. Select your shared filesystem volume from the "Temp Filesystem" dropdown
+
+4. (Optional) Customize the subfolder path within the filesystem (defaults to "beam")
+
+5. Save the settings
+
+Now all temporary export files will be stored in your configured shared filesystem instead of the local temp directory, ensuring they're accessible regardless of which server handles the download request.
+
+### Configuration via Config File
+
+You can also configure this programmatically by creating a `config/beam.php` file:
+
+```php
+<?php
+
+return [
+    // Use the handle of your filesystem volume
+    'tempFilesystemHandle' => 'sharedStorage',
+    
+    // Optional: customize the subfolder
+    'tempSubfolder' => 'beam',
+];
+```
+
+### Note on Performance
+
+When using filesystem storage, there may be a slight delay as files are uploaded to and downloaded from your cloud storage provider. For most use cases, this is negligible, but if you're generating very large files frequently, you may want to test the performance impact.
+
 Brought to you by [Superbig](https://superbig.co)
