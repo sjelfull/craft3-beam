@@ -90,12 +90,13 @@ class BeamService extends Component
         }
 
         $writer = new XLSXWriter();
+        $sheetsWritten = 0;
         
         // Check if multiple sheets are configured
         if (!empty($model->sheets)) {
             // Handle multiple sheets
-            foreach ($model->sheets as $sheet) {
-                $sheetName = $sheet['name'] ?? 'Sheet';
+            foreach ($model->sheets as $index => $sheet) {
+                $sheetName = $sheet['name'] ?? 'Sheet' . ($index + 1);
                 $sheetHeader = $sheet['header'] ?? [];
                 $sheetContent = $sheet['content'] ?? [];
                 
@@ -104,6 +105,12 @@ class BeamService extends Component
                 }
                 
                 $this->writeSheet($writer, $sheetName, $sheetHeader, $sheetContent);
+                $sheetsWritten++;
+            }
+            
+            // If no sheets were written, return early to avoid creating invalid Excel file
+            if ($sheetsWritten === 0) {
+                return;
             }
         } else {
             // Handle single sheet (backward compatibility)
