@@ -116,44 +116,57 @@ These types are supported:
 | dollar      | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
 | euro        | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
 
-## Configuration for Load-Balanced Environments
+## Load-Balanced Environments
 
-If you're running your site on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), temporary files stored on the local filesystem may not be accessible when subsequent requests hit different servers. This can cause intermittent download failures.
+If you're running your site on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), you may experience intermittent download failures. This happens because temporary export files are stored on the local filesystem, and subsequent requests may be routed to a different server that doesn't have access to the file.
 
-To solve this, Beam allows you to configure a shared filesystem volume for temporary file storage.
+### Solution: Configure a Shared Temp Directory
 
-### Setting up Shared Filesystem Storage
+To resolve this issue, configure Craft to use a shared temp directory that's accessible by all servers in your load-balanced environment. This is done via Craft's general configuration.
 
-1. First, create a filesystem volume in Craft CMS (Settings → Filesystems) that uses a cloud storage service like Amazon S3, Google Cloud Storage, or similar. Make sure this filesystem is accessible by all servers in your load-balanced environment.
-
-2. Go to Settings → Plugins → Beam → Settings
-
-3. Select your shared filesystem volume from the "Temp Filesystem" dropdown
-
-4. (Optional) Customize the subfolder path within the filesystem (defaults to "beam")
-
-5. Save the settings
-
-Now all temporary export files will be stored in your configured shared filesystem instead of the local temp directory, ensuring they're accessible regardless of which server handles the download request.
-
-### Configuration via Config File
-
-You can also configure this programmatically by creating a `config/beam.php` file:
+In your `config/general.php` file, set the `tempAssetUploadFs` setting to a filesystem that all servers can access:
 
 ```php
-<?php
-
 return [
-    // Use the handle of your filesystem volume
-    'tempFilesystemHandle' => 'sharedStorage',
-    
-    // Optional: customize the subfolder
-    'tempSubfolder' => 'beam',
+    '*' => [
+        // other settings...
+        
+        // Use a shared filesystem for temporary files
+        'tempAssetUploadFs' => 's3', // or any filesystem handle you've configured
+    ],
 ];
 ```
 
-### Note on Performance
+### Setting Up a Shared Filesystem
 
-When using filesystem storage, there may be a slight delay as files are uploaded to and downloaded from your cloud storage provider. For most use cases, this is negligible, but if you're generating very large files frequently, you may want to test the performance impact.
+1. **Create a Filesystem**: In the Craft Control Panel, go to Settings → Filesystems and create a new filesystem that uses cloud storage (AWS S3, Google Cloud Storage, DigitalOcean Spaces, etc.).
+
+2. **Note the Handle**: Make note of the filesystem's handle (e.g., `s3`, `cloudStorage`, etc.).
+
+3. **Update Configuration**: Add the `tempAssetUploadFs` setting to your `config/general.php` as shown above, using your filesystem's handle.
+
+4. **Test**: Try exporting a file multiple times and refreshing the browser. Downloads should now work consistently.
+
+### Alternative: Use a Shared Mount
+
+If you prefer not to use cloud storage for temporary files, you can configure a shared network mount (like NFS or similar) and point Craft's `@storage` alias to this shared location:
+
+```php
+return [
+    '*' => [
+        'aliases' => [
+            '@storage' => '/mnt/shared-storage/storage',
+        ],
+    ],
+];
+```
+
+This ensures the `storage/runtime/temp/beam/` directory is accessible by all servers.
+
+### More Information
+
+For more details on configuring Craft CMS for multi-server environments, refer to:
+- [Craft CMS Documentation - tempAssetUploadFs](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs)
+- Your hosting provider's documentation on shared storage solutions
 
 Brought to you by [Superbig](https://superbig.co)

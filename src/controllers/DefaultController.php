@@ -41,25 +41,11 @@ class DefaultController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $filename = $config['filename'];
-        $mimeType = $config['mimeType'];
-
-        // Handle filesystem storage
-        if (!empty($config['useFilesystem'])) {
-            $content = Beam::$plugin->beamService->readFromFilesystem($config['tempFilename']);
-            
-            // Optionally clean up the temp file after download
-            // Beam::$plugin->beamService->deleteFromFilesystem($config['tempFilename']);
-            
-            return Craft::$app->getResponse()->sendContentAsFile($content, $filename, [
-                'mimeType' => $mimeType,
-            ]);
-        }
-
-        // Handle local file storage
         $path = $config['path'];
+        $filename = $config['filename'];
+
         return Craft::$app->getResponse()->sendFile($path, $filename, [
-            'mimeType' => $mimeType,
+            'mimeType' => $config['mimeType'],
         ]);
     }
 }

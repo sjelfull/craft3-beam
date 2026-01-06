@@ -11,13 +11,11 @@
 namespace superbig\beam;
 
 use Craft;
-use craft\base\Model;
 use craft\base\Plugin;
 
 use craft\events\RegisterUrlRulesEvent;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
-use superbig\beam\models\Settings;
 use superbig\beam\services\BeamService as BeamServiceService;
 use superbig\beam\variables\BeamVariable;
 
@@ -44,8 +42,6 @@ class Beam extends Plugin
 
     // Public Methods
     // =========================================================================
-
-    public bool $hasCpSettings = true;
 
     /**
      * @inheritdoc
@@ -88,35 +84,6 @@ class Beam extends Plugin
                 ['name' => $this->name]
             ),
             __METHOD__
-        );
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function createSettingsModel(): ?Model
-    {
-        return new Settings();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function settingsHtml(): ?string
-    {
-        $filesystems = [];
-        $volumes = Craft::$app->getVolumes()->getAllVolumes();
-        
-        foreach ($volumes as $volume) {
-            $filesystems[$volume->handle] = $volume->name;
-        }
-
-        return Craft::$app->view->renderTemplate(
-            'beam/settings',
-            [
-                'settings' => $this->getSettings(),
-                'filesystems' => $filesystems,
-            ]
         );
     }
 }
