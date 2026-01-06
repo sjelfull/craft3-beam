@@ -8,11 +8,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 - Added support for multiple sheets in Excel (XLSX) exports
-- Added fluent API methods `sheet()` and `setSheet()` for working with multiple sheets
-- Added `sheets` property to BeamModel for array-based sheet configuration
-- Added `setSheets()` method for dynamic sheet configuration
-- Added automatic sheet name sanitization (max 31 chars, invalid characters removed)
-- Added auto-numbering for unnamed sheets (Sheet1, Sheet2, etc.)
 
 ## 5.0.0 - 2024-04-23
 
