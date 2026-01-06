@@ -44,6 +44,8 @@ Install via Composer from your Craft project directory:
 composer require superbig/craft3-beam
 ```
 
+> **Note:** The package name is `superbig/craft3-beam` for all Craft CMS versions (3, 4, and 5). The version installed automatically matches your Craft version.
+
 Then install the plugin in the Craft Control Panel:
 1. Go to **Settings → Plugins**
 2. Find **Beam** and click **Install**
@@ -268,6 +270,6 @@ Excel (XLSX) files support custom cell formatting. Define column types in the he
 Brought to you by [Superbig](https://superbig.co)
 
 **Useful Resources:**
-- [Documentation](https://github.com/sjelfull/craft3-beam/blob/master/README.md)
 - [Report Issues](https://github.com/sjelfull/craft3-beam/issues)
-- [Changelog](https://github.com/sjelfull/craft3-beam/blob/master/CHANGELOG.md)
+- [View Changelog](https://github.com/sjelfull/craft3-beam/blob/master/CHANGELOG.md)
+- [Superbig Website](https://superbig.co)
