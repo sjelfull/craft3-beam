@@ -26,6 +26,7 @@ class BeamModel extends Model
     public array $rows = [];
     public string $filename = 'output';
     public string $sheetName = 'Sheet';
+    public array $sheets = [];
 
     public function init(): void
     {
@@ -84,6 +85,13 @@ class BeamModel extends Model
     public function setFilename($filename = null): static
     {
         $this->filename = $filename;
+
+        return $this;
+    }
+
+    public function setSheets(array $sheets = []): static
+    {
+        $this->sheets = $sheets;
 
         return $this;
     }

@@ -116,4 +116,60 @@ These types are supported:
 | dollar      | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
 | euro        | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
 
+### Multiple sheets in Excel (XLSX only):
+
+You can create an Excel file with multiple sheets by providing a `sheets` array in the options. Each sheet can have its own name, header, and content:
+
+```twig
+{% set options = {
+    filename: 'users-report',
+    sheets: [
+        {
+            name: 'Active Users',
+            header: ['Email', 'Name', 'Status'],
+            content: [
+                [ 'john@example.com', 'John Doe', 'Active' ],
+                [ 'jane@example.com', 'Jane Doe', 'Active' ],
+            ]
+        },
+        {
+            name: 'Inactive Users',
+            header: ['Email', 'Name', 'Status'],
+            content: [
+                [ 'inactive@example.com', 'Bob Smith', 'Inactive' ],
+            ]
+        }
+    ]
+} %}
+{% set beam = craft.beam.create(options) %}
+{% do beam.xlsx() %}
+```
+
+You can also build sheets dynamically using `setSheets()`:
+
+```twig
+{% set beam = craft.beam.create() %}
+{% do beam.setFilename('users-by-group') %}
+
+{% set sheets = [] %}
+{% for group in craft.users.groups() %}
+    {% set users = craft.users().group(group.handle).all() %}
+    {% set sheetContent = [] %}
+    {% for user in users %}
+        {% set sheetContent = sheetContent|merge([[ user.email, user.fullName ]]) %}
+    {% endfor %}
+    
+    {% set sheets = sheets|merge([{
+        name: group.name,
+        header: ['Email', 'Full Name'],
+        content: sheetContent
+    }]) %}
+{% endfor %}
+
+{% do beam.setSheets(sheets) %}
+{% do beam.xlsx() %}
+```
+
+**Note:** The `sheets` configuration only works with XLSX exports. If you use it with `csv()`, it will be ignored and a standard single-sheet CSV will be generated.
+
 Brought to you by [Superbig](https://superbig.co)

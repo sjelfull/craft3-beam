@@ -84,38 +84,38 @@ class BeamService extends Component
     public function xlsx(BeamModel $model): void
     {
         $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
-        $header = $model->header;
-        $content = $model->content;
-
-        if (empty($header) && empty($content)) {
-            return;
-        }
-
+        
         if (!file_exists($tempPath) && !is_dir($tempPath)) {
             FileHelper::createDirectory($tempPath);
         }
 
-        // Load the CSV document from a string
         $writer = new XLSXWriter();
-        $sheetName = !empty($model->sheetName) ? $model->sheetName : 'Sheet';
-
-        if (!empty($header)) {
-            $headers = [];
-            foreach ($header as $header) {
-                if (is_array($header)) {
-                    $text = $header['text'] ?? 'No text set';
-                    $type = $this->normalizeCellFormat($header['type'] ?? 'string');
-                    $headers[ $text ] = $type;
-                } else {
-                    $headers[ $header ] = 'string';
+        
+        // Check if multiple sheets are configured
+        if (!empty($model->sheets)) {
+            // Handle multiple sheets
+            foreach ($model->sheets as $sheet) {
+                $sheetName = $sheet['name'] ?? 'Sheet';
+                $sheetHeader = $sheet['header'] ?? [];
+                $sheetContent = $sheet['content'] ?? [];
+                
+                if (empty($sheetHeader) && empty($sheetContent)) {
+                    continue;
                 }
+                
+                $this->writeSheet($writer, $sheetName, $sheetHeader, $sheetContent);
             }
-            // Insert the headers
-            $writer->writeSheetHeader($sheetName, $headers);
-        }
-
-        foreach ($content as $row) {
-            $writer->writeSheetRow($sheetName, $row);
+        } else {
+            // Handle single sheet (backward compatibility)
+            $header = $model->header;
+            $content = $model->content;
+            
+            if (empty($header) && empty($content)) {
+                return;
+            }
+            
+            $sheetName = !empty($model->sheetName) ? $model->sheetName : 'Sheet';
+            $this->writeSheet($writer, $sheetName, $header, $content);
         }
 
         $mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -194,6 +194,28 @@ class BeamService extends Component
         ];
 
         return $config;
+    }
+
+    private function writeSheet(XLSXWriter $writer, string $sheetName, array $header, array $content): void
+    {
+        if (!empty($header)) {
+            $headers = [];
+            foreach ($header as $headerItem) {
+                if (is_array($headerItem)) {
+                    $text = $headerItem['text'] ?? 'No text set';
+                    $type = $this->normalizeCellFormat($headerItem['type'] ?? 'string');
+                    $headers[ $text ] = $type;
+                } else {
+                    $headers[ $headerItem ] = 'string';
+                }
+            }
+            // Insert the headers
+            $writer->writeSheetHeader($sheetName, $headers);
+        }
+
+        foreach ($content as $row) {
+            $writer->writeSheetRow($sheetName, $row);
+        }
     }
 
     private function normalizeCellFormat(string $type): string
