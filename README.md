@@ -214,6 +214,8 @@ Excel (XLSX) files support custom cell formatting. Define column types in the he
 <details>
 <summary><strong>Export Commerce Orders</strong></summary>
 
+> **Note:** This example requires [Craft Commerce](https://craftcms.com/commerce) to be installed.
+
 ```twig
 {% set beam = craft.beam.create({
     header: ['Order Number', 'Customer', 'Total', 'Date', 'Status']
