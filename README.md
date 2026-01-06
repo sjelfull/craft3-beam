@@ -1,119 +1,273 @@
-# Beam plugin for Craft CMS 3.x
+# Beam for Craft CMS
 
-Generate CSVs and XLS files in your templates
+[![Latest Version](https://img.shields.io/github/release/sjelfull/craft3-beam.svg?style=flat-square)](https://github.com/sjelfull/craft3-beam/releases)
+[![License](https://img.shields.io/github/license/sjelfull/craft3-beam.svg?style=flat-square)](LICENSE.md)
+
+> Generate CSV and Excel (XLSX) files directly from your Craft CMS templates
 
 ![Screenshot](resources/img/plugin-logo.png)
 
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Usage Guide](#usage-guide)
+  - [Basic Usage](#basic-usage)
+  - [Output Formats](#output-formats)
+  - [Dynamic Content](#dynamic-content)
+  - [Configuration Methods](#configuration-methods)
+- [Advanced Features](#advanced-features)
+  - [Custom Cell Formatting](#custom-cell-formatting)
+  - [Supported Format Types](#supported-format-types)
+- [Common Use Cases](#common-use-cases)
+- [About](#about)
+
 ## Requirements
 
-This plugin requires Craft CMS 3.0.0-beta.23 or later.
+- Craft CMS 5.0.0 or later
+- PHP 8.0.2 or later
+
+<details>
+<summary>Legacy version support</summary>
+
+For older Craft CMS versions:
+- **Craft 4**: Use Beam 3.x
+- **Craft 3**: Use Beam 2.x
+</details>
 
 ## Installation
 
-To install the plugin, follow these instructions.
+Install via Composer from your Craft project directory:
 
-1. Open your terminal and go to your Craft project:
+```bash
+composer require superbig/craft3-beam
+```
 
-        cd /path/to/project
+Then install the plugin in the Craft Control Panel:
+1. Go to **Settings → Plugins**
+2. Find **Beam** and click **Install**
 
-2. Then tell Composer to load the plugin:
+## Quick Start
 
-        composer require superbig/craft3-beam
-
-3. In the Control Panel, go to Settings → Plugins and click the “Install” button for Beam.
-
-## Using Beam
-
-The starting point when working with Beam is to create a instance:
+Generate a CSV file with just a few lines:
 
 ```twig
-{% set options = {
+{% set beam = craft.beam.create({
+    header: ['Name', 'Email'],
+    content: [
+        ['John Doe', 'john@example.com'],
+        ['Jane Doe', 'jane@example.com']
+    ]
+}) %}
+{% do beam.csv() %}
+```
+
+That's it! The file will automatically download in the user's browser.
+
+## Usage Guide
+
+### Basic Usage
+
+Every Beam export starts by creating a Beam instance with `craft.beam.create()`:
+
+```twig
+{% set beam = craft.beam.create({
     header: ['Email', 'Name'],
     content: [
-        [ 'test@example.com', 'John Doe' ],
-        [ 'another+test@example.com', 'Jane Doe' ],
-        [ 'third+test@example.com', 'Trond Johansen' ],
+        ['test@example.com', 'John Doe'],
+        ['another@example.com', 'Jane Doe'],
+        ['third@example.com', 'Trond Johansen']
     ]
-} %}
-{% set beam = craft.beam.create(options) %}
+}) %}
 ```
 
-This will return a `BeamModel` behind the scenes.
+### Output Formats
 
-If you want to append content dynamically, say from a loop, you can use the `append` method:
-
-```twig
-{% set myUserQuery = craft.users()
-    .group('authors') %}
-
-{# Fetch the users #}
-{% set users = myUserQuery.all() %}
-
-{# Display the list #}
-{% for user in users %}
-    {% do beam.append([user.username, user.name, user.email]) %}
-{% endfor %}
-```
-
-### To generate an CSV:
+#### Generate CSV
 ```twig
 {% do beam.csv() %}
 ```
 
-### To generate an XLSX:
+#### Generate Excel (XLSX)
 ```twig
 {% do beam.xlsx() %}
 ```
 
-### Changing config on the fly
+### Dynamic Content
 
-To set the header of the file (the first row):
+Build your export dynamically using loops and the `append()` method:
+
 ```twig
-{% do beam.setHeader([ 'Username', 'Name', 'Email' ]) %}
-``` 
+{# Create beam with headers #}
+{% set beam = craft.beam.create({
+    header: ['Username', 'Name', 'Email']
+}) %}
 
-To set the filename:
+{# Append data from entries or users #}
+{% set users = craft.users().group('authors').all() %}
+{% for user in users %}
+    {% do beam.append([user.username, user.name, user.email]) %}
+{% endfor %}
+
+{# Generate the file #}
+{% do beam.csv() %}
+```
+
+### Configuration Methods
+
+Beam provides several methods to customize your export:
+
+<details>
+<summary><strong>Set Custom Filename</strong></summary>
+
 ```twig
 {% set currentDate = now|date('Y-m-d') %}
-{% do beam.setFilename("report-#{currentDate}") %}
+{% do beam.setFilename("user-report-#{currentDate}") %}
 ```
+</details>
 
-To overwrite the content:
+<details>
+<summary><strong>Update Headers</strong></summary>
+
+```twig
+{% do beam.setHeader(['Username', 'Full Name', 'Email Address']) %}
+```
+</details>
+
+<details>
+<summary><strong>Replace Content</strong></summary>
+
 ```twig
 {% do beam.setContent([
-    [ 'test@example.com', 'John Doe' ],
-    [ 'another+test@example.com', 'Jane Doe' ],
-    [ 'third+test@example.com', 'Trond Johansen' ],
+    ['test@example.com', 'John Doe'],
+    ['another@example.com', 'Jane Doe']
 ]) %}
 ```
+</details>
 
-### Custom cell formatting is supported for XLSX:
+## Advanced Features
+
+### Custom Cell Formatting
+
+Excel (XLSX) files support custom cell formatting. Define column types in the header:
 
 ```twig
-{% set options = {
-    header: ['Email', 'Name', { text: 'Number', type: 'number' }, { text: 'Date', type: 'date' }],
+{% set beam = craft.beam.create({
+    header: [
+        'Email',
+        'Name',
+        { text: 'Amount', type: 'price' },
+        { text: 'Date', type: 'date' }
+    ],
     content: [
-        [ 'test@example.com', 'John Doe', 100000, '2022-06-10'],
-        [ 'another+test@example.com', 'Jane Doe', 252323, '2022-06-22'],
-        [ 'third+test@example.com', 'Trond Johansen', 30, '2022-06-22'],
-        [ 'third+test@example.com', 'Trond Johansen', 6233, '2023-06-22'],
+        ['john@example.com', 'John Doe', 1500.50, '2024-01-15'],
+        ['jane@example.com', 'Jane Doe', 2300.75, '2024-01-16']
     ]
-} %}
-{% set beam = craft.beam.create(options) %}
-{%  do beam.xlsx() %}
+}) %}
+{% do beam.xlsx() %}
 ```
 
-These types are supported:
+### Supported Format Types
 
-| Format Type | Maps to the following cell format         |
-|-------------|-------------------------------------------|
-| string      | @                                         |
-| integer     | 0                                         |
-| date        | YYYY-MM-DD                                |
-| datetime    | YYYY-MM-DD HH:MM:SS                       |
-| time        | HH:MM:SS                                  |
-| price       | #,##0.00                                  |
-| dollar      | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
-| euro        | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
+| Type     | Excel Format                              | Example Output      |
+|----------|-------------------------------------------|---------------------|
+| string   | @                                         | Text                |
+| integer  | 0                                         | 12345               |
+| date     | YYYY-MM-DD                                | 2024-01-15          |
+| datetime | YYYY-MM-DD HH:MM:SS                       | 2024-01-15 14:30:00 |
+| time     | HH:MM:SS                                  | 14:30:00            |
+| price    | #,##0.00                                  | 1,234.56            |
+| dollar   | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 | $1,234.56           |
+| euro     | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] | €1.234,56           |
+
+## Common Use Cases
+
+<details>
+<summary><strong>Export Entry Data</strong></summary>
+
+```twig
+{% set beam = craft.beam.create({
+    header: ['Title', 'Author', 'Date Published', 'URL']
+}) %}
+
+{% set entries = craft.entries()
+    .section('blog')
+    .orderBy('postDate DESC')
+    .all() %}
+
+{% for entry in entries %}
+    {% do beam.append([
+        entry.title,
+        entry.author.fullName,
+        entry.postDate|date('Y-m-d'),
+        entry.url
+    ]) %}
+{% endfor %}
+
+{% do beam.csv() %}
+```
+</details>
+
+<details>
+<summary><strong>Export Commerce Orders</strong></summary>
+
+```twig
+{% set beam = craft.beam.create({
+    header: ['Order Number', 'Customer', 'Total', 'Date', 'Status']
+}) %}
+
+{% set orders = craft.orders()
+    .isCompleted(true)
+    .orderBy('dateOrdered DESC')
+    .all() %}
+
+{% for order in orders %}
+    {% do beam.append([
+        order.number,
+        order.email,
+        order.totalPrice,
+        order.dateOrdered|date('Y-m-d'),
+        order.orderStatus
+    ]) %}
+{% endfor %}
+
+{% do beam.xlsx() %}
+```
+</details>
+
+<details>
+<summary><strong>Export with Formatted Numbers</strong></summary>
+
+```twig
+{% set beam = craft.beam.create({
+    header: [
+        'Product',
+        { text: 'Price', type: 'dollar' },
+        { text: 'Quantity', type: 'integer' },
+        { text: 'Total', type: 'dollar' }
+    ]
+}) %}
+
+{% set products = craft.entries().section('products').all() %}
+{% for product in products %}
+    {% do beam.append([
+        product.title,
+        product.price,
+        product.stock,
+        product.price * product.stock
+    ]) %}
+{% endfor %}
+
+{% do beam.xlsx() %}
+```
+</details>
+
+## About
 
 Brought to you by [Superbig](https://superbig.co)
+
+**Useful Resources:**
+- [Documentation](https://github.com/sjelfull/craft3-beam/blob/master/README.md)
+- [Report Issues](https://github.com/sjelfull/craft3-beam/issues)
+- [Changelog](https://github.com/sjelfull/craft3-beam/blob/master/CHANGELOG.md)
