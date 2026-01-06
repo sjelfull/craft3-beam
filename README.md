@@ -116,57 +116,22 @@ These types are supported:
 | dollar      | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
 | euro        | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
 
-## Load-Balanced Environments
+## Load-balanced environments
 
-If you're running your site on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), you may experience intermittent download failures. This happens because temporary export files are stored on the local filesystem, and subsequent requests may be routed to a different server that doesn't have access to the file.
+If you're running on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), you may experience intermittent download failures when temporary files are stored on the local filesystem.
 
-### Solution: Configure a Shared Temp Directory
-
-To resolve this issue, configure Craft to use a shared temp directory that's accessible by all servers in your load-balanced environment. This is done via Craft's general configuration.
-
-In your `config/general.php` file, set the `tempAssetUploadFs` setting to a filesystem that all servers can access:
+Configure Craft to use a shared filesystem for temporary files by setting `tempAssetUploadFs` in your `config/general.php`:
 
 ```php
 return [
     '*' => [
-        // other settings...
-        
-        // Use a shared filesystem for temporary files
-        'tempAssetUploadFs' => 's3', // or any filesystem handle you've configured
+        'tempAssetUploadFs' => 's3', // use your filesystem handle
     ],
 ];
 ```
 
-### Setting Up a Shared Filesystem
+Or use the `CRAFT_TEMP_ASSET_UPLOAD_FS` environment variable.
 
-1. **Create a Filesystem**: In the Craft Control Panel, go to Settings → Filesystems and create a new filesystem that uses cloud storage (AWS S3, Google Cloud Storage, DigitalOcean Spaces, etc.).
-
-2. **Note the Handle**: Make note of the filesystem's handle (e.g., `s3`, `cloudStorage`, etc.).
-
-3. **Update Configuration**: Add the `tempAssetUploadFs` setting to your `config/general.php` as shown above, using your filesystem's handle.
-
-4. **Test**: Try exporting a file multiple times and refreshing the browser. Downloads should now work consistently.
-
-### Alternative: Use a Shared Mount
-
-If you prefer not to use cloud storage for temporary files, you can configure a shared network mount (like NFS or similar) and point Craft's `@storage` alias to this shared location:
-
-```php
-return [
-    '*' => [
-        'aliases' => [
-            '@storage' => '/mnt/shared-storage/storage',
-        ],
-    ],
-];
-```
-
-This ensures the `storage/runtime/temp/beam/` directory is accessible by all servers.
-
-### More Information
-
-For more details on configuring Craft CMS for multi-server environments, refer to:
-- [Craft CMS Documentation - tempAssetUploadFs](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs)
-- Your hosting provider's documentation on shared storage solutions
+See the [Craft documentation](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs) for more details.
 
 Brought to you by [Superbig](https://superbig.co)
