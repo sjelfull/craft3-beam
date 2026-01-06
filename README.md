@@ -192,7 +192,7 @@ If you need to configure all sheets upfront, you can provide a `sheets` array in
     ]
 } %}
 {% set beam = craft.beam.create(options) %}
-{%  do beam.xlsx() %}
+{% do beam.xlsx() %}
 ```
 
 Or build the sheets array dynamically with `setSheets()`:
