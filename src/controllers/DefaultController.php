@@ -47,7 +47,9 @@ class DefaultController extends Controller
         // Register shutdown function to clean up the temporary file after the response is sent
         register_shutdown_function(function() use ($path) {
             if (file_exists($path)) {
-                @unlink($path);
+                if (!unlink($path)) {
+                    Craft::warning("Failed to delete temporary file: {$path}", __METHOD__);
+                }
             }
         });
 
