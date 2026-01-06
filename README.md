@@ -116,4 +116,26 @@ These types are supported:
 | dollar      | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
 | euro        | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
 
+### Soft newlines in XLSX cells:
+
+Soft newlines (line breaks within cells) are supported in XLSX files. Simply use `\n` in your cell content:
+
+```twig
+{% set options = {
+    header: ['Name', 'Address'],
+    content: [
+        [ 'John Doe', "123 Main St\nApt 4B\nNew York, NY" ],
+        [ 'Jane Smith', "456 Oak Ave\nSuite 200\nLos Angeles, CA" ],
+    ]
+} %}
+{% set beam = craft.beam.create(options) %}
+{% do beam.xlsx() %}
+```
+
+Text wrapping is enabled by default to properly display multi-line content. If you need to disable it:
+
+```twig
+{% do beam.setWrapText(false) %}
+```
+
 Brought to you by [Superbig](https://superbig.co)

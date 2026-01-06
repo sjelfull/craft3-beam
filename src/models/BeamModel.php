@@ -26,6 +26,7 @@ class BeamModel extends Model
     public array $rows = [];
     public string $filename = 'output';
     public string $sheetName = 'Sheet';
+    public bool $wrapText = true;
 
     public function init(): void
     {
@@ -84,6 +85,13 @@ class BeamModel extends Model
     public function setFilename($filename = null): static
     {
         $this->filename = $filename;
+
+        return $this;
+    }
+
+    public function setWrapText(bool $wrapText): static
+    {
+        $this->wrapText = $wrapText;
 
         return $this;
     }

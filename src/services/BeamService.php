@@ -115,7 +115,8 @@ class BeamService extends Component
         }
 
         foreach ($content as $row) {
-            $writer->writeSheetRow($sheetName, $row);
+            $rowStyle = $model->wrapText ? ['wrap_text' => true] : [];
+            $writer->writeSheetRow($sheetName, $row, $rowStyle);
         }
 
         $mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
