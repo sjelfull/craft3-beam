@@ -48,10 +48,12 @@ class BeamModel extends Model
             // Append to the active sheet
             $this->ensureSheetExists($this->activeSheet);
             $sheetIndex = $this->getSheetIndex($this->activeSheet);
-            $this->sheets[$sheetIndex]['content'] = array_merge(
-                $this->sheets[$sheetIndex]['content'] ?? [],
-                $content
-            );
+            if ($sheetIndex !== null) {
+                $this->sheets[$sheetIndex]['content'] = array_merge(
+                    $this->sheets[$sheetIndex]['content'] ?? [],
+                    $content
+                );
+            }
         } else {
             // Append to default content (backward compatibility)
             $this->content = array_merge($this->content, $content);
@@ -66,7 +68,9 @@ class BeamModel extends Model
             // Set header for the active sheet
             $this->ensureSheetExists($this->activeSheet);
             $sheetIndex = $this->getSheetIndex($this->activeSheet);
-            $this->sheets[$sheetIndex]['header'] = $headers;
+            if ($sheetIndex !== null) {
+                $this->sheets[$sheetIndex]['header'] = $headers;
+            }
         } else {
             // Set default header (backward compatibility)
             $this->header = $headers;
@@ -86,7 +90,9 @@ class BeamModel extends Model
             // Set content for the active sheet
             $this->ensureSheetExists($this->activeSheet);
             $sheetIndex = $this->getSheetIndex($this->activeSheet);
-            $this->sheets[$sheetIndex]['content'] = $content;
+            if ($sheetIndex !== null) {
+                $this->sheets[$sheetIndex]['content'] = $content;
+            }
         } else {
             // Set default content (backward compatibility)
             $this->content = $content;
@@ -132,11 +138,13 @@ class BeamModel extends Model
         // Apply options if provided
         if (!empty($options)) {
             $sheetIndex = $this->getSheetIndex($name);
-            if (isset($options['header'])) {
-                $this->sheets[$sheetIndex]['header'] = $options['header'];
-            }
-            if (isset($options['content'])) {
-                $this->sheets[$sheetIndex]['content'] = $options['content'];
+            if ($sheetIndex !== null) {
+                if (isset($options['header'])) {
+                    $this->sheets[$sheetIndex]['header'] = $options['header'];
+                }
+                if (isset($options['content'])) {
+                    $this->sheets[$sheetIndex]['content'] = $options['content'];
+                }
             }
         }
 
