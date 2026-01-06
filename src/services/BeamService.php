@@ -84,14 +84,14 @@ class BeamService extends Component
     public function xlsx(BeamModel $model): void
     {
         $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
-        
+
         if (!file_exists($tempPath) && !is_dir($tempPath)) {
             FileHelper::createDirectory($tempPath);
         }
 
         $writer = new XLSXWriter();
         $sheetsWritten = 0;
-        
+
         // Check if multiple sheets are configured
         if (!empty($model->sheets)) {
             // Handle multiple sheets
@@ -99,15 +99,15 @@ class BeamService extends Component
                 $sheetName = $sheet['name'] ?? 'Sheet' . ($index + 1);
                 $sheetHeader = $sheet['header'] ?? [];
                 $sheetContent = $sheet['content'] ?? [];
-                
+
                 if (empty($sheetHeader) && empty($sheetContent)) {
                     continue;
                 }
-                
+
                 $this->writeSheet($writer, $sheetName, $sheetHeader, $sheetContent);
                 $sheetsWritten++;
             }
-            
+
             // If no sheets were written, return early to avoid creating invalid Excel file
             if ($sheetsWritten === 0) {
                 return;
@@ -116,11 +116,11 @@ class BeamService extends Component
             // Handle single sheet (backward compatibility)
             $header = $model->header;
             $content = $model->content;
-            
+
             if (empty($header) && empty($content)) {
                 return;
             }
-            
+
             $sheetName = !empty($model->sheetName) ? $model->sheetName : 'Sheet';
             $this->writeSheet($writer, $sheetName, $header, $content);
         }
