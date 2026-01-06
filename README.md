@@ -118,7 +118,7 @@ These types are supported:
 
 ### Multiple sheets in Excel (XLSX only):
 
-You can create an Excel file with multiple sheets using the fluent `sheet()` method. This is the recommended approach as it's simple and intuitive:
+You can create an Excel file with multiple sheets using the fluent `sheet()` method:
 
 ```twig
 {% set beam = craft.beam.create() %}
