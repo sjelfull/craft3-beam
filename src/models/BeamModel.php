@@ -27,6 +27,7 @@ class BeamModel extends Model
     public string $filename = 'output';
     public string $sheetName = 'Sheet';
     public array $sheets = [];
+    private ?string $activeSheet = null;
 
     public function init(): void
     {
@@ -43,14 +44,33 @@ class BeamModel extends Model
             $content = [$content];
         }
 
-        $this->content = array_merge($this->content, $content);
+        if ($this->activeSheet !== null) {
+            // Append to the active sheet
+            $this->ensureSheetExists($this->activeSheet);
+            $sheetIndex = $this->getSheetIndex($this->activeSheet);
+            $this->sheets[$sheetIndex]['content'] = array_merge(
+                $this->sheets[$sheetIndex]['content'] ?? [],
+                $content
+            );
+        } else {
+            // Append to default content (backward compatibility)
+            $this->content = array_merge($this->content, $content);
+        }
 
         return $this;
     }
 
     public function setHeader(array $headers = []): static
     {
-        $this->header = $headers;
+        if ($this->activeSheet !== null) {
+            // Set header for the active sheet
+            $this->ensureSheetExists($this->activeSheet);
+            $sheetIndex = $this->getSheetIndex($this->activeSheet);
+            $this->sheets[$sheetIndex]['header'] = $headers;
+        } else {
+            // Set default header (backward compatibility)
+            $this->header = $headers;
+        }
 
         return $this;
     }
@@ -62,7 +82,15 @@ class BeamModel extends Model
 
     public function setContent(array $content): static
     {
-        $this->content = $content;
+        if ($this->activeSheet !== null) {
+            // Set content for the active sheet
+            $this->ensureSheetExists($this->activeSheet);
+            $sheetIndex = $this->getSheetIndex($this->activeSheet);
+            $this->sheets[$sheetIndex]['content'] = $content;
+        } else {
+            // Set default content (backward compatibility)
+            $this->content = $content;
+        }
 
         return $this;
     }
@@ -94,6 +122,61 @@ class BeamModel extends Model
         $this->sheets = $sheets;
 
         return $this;
+    }
+
+    public function sheet(string $name, array $options = []): static
+    {
+        $this->ensureSheetExists($name);
+        $this->activeSheet = $name;
+
+        // Apply options if provided
+        if (!empty($options)) {
+            $sheetIndex = $this->getSheetIndex($name);
+            if (isset($options['header'])) {
+                $this->sheets[$sheetIndex]['header'] = $options['header'];
+            }
+            if (isset($options['content'])) {
+                $this->sheets[$sheetIndex]['content'] = $options['content'];
+            }
+        }
+
+        return $this;
+    }
+
+    public function setSheet(string $name): static
+    {
+        $this->ensureSheetExists($name);
+        $this->activeSheet = $name;
+
+        return $this;
+    }
+
+    private function ensureSheetExists(string $name): void
+    {
+        // Check if sheet already exists
+        foreach ($this->sheets as $sheet) {
+            if (($sheet['name'] ?? '') === $name) {
+                return;
+            }
+        }
+
+        // Create new sheet
+        $this->sheets[] = [
+            'name' => $name,
+            'header' => [],
+            'content' => [],
+        ];
+    }
+
+    private function getSheetIndex(string $name): ?int
+    {
+        foreach ($this->sheets as $index => $sheet) {
+            if (($sheet['name'] ?? '') === $name) {
+                return $index;
+            }
+        }
+
+        return null;
     }
 
     public function csv($filename = null): void

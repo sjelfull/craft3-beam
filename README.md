@@ -170,6 +170,56 @@ You can also build sheets dynamically using `setSheets()`:
 {% do beam.xlsx() %}
 ```
 
+#### Using fluent methods for building sheets:
+
+For a more intuitive API, you can use the `sheet()` method to work with individual sheets:
+
+```twig
+{% set beam = craft.beam.create() %}
+{% do beam.setFilename('users-by-group') %}
+
+{# Create and populate sheets using fluent methods #}
+{% for group in craft.users.groups() %}
+    {% set users = craft.users().group(group.handle).all() %}
+    
+    {# Select/create a sheet and set its header #}
+    {% do beam.sheet(group.name).setHeader(['Email', 'Full Name']) %}
+    
+    {# Append users to the active sheet #}
+    {% for user in users %}
+        {% do beam.append([user.email, user.fullName]) %}
+    {% endfor %}
+{% endfor %}
+
+{% do beam.xlsx() %}
+```
+
+You can also set a sheet as active and then work with it:
+
+```twig
+{% set beam = craft.beam.create() %}
+
+{# Set 'Summary' as the active sheet #}
+{% do beam.setSheet('Summary') %}
+{% do beam.setHeader(['Total Users', 'Active', 'Inactive']) %}
+{% do beam.append([100, 75, 25]) %}
+
+{# Switch to 'Details' sheet #}
+{% do beam.sheet('Details').setHeader(['Email', 'Name', 'Status']) %}
+{% do beam.append(['john@example.com', 'John', 'Active']) %}
+
+{% do beam.xlsx() %}
+```
+
+The `sheet()` method also accepts an options array as the second parameter:
+
+```twig
+{% do beam.sheet('Products', {
+    header: ['ID', 'Name', 'Price']
+}) %}
+{% do beam.append(['1', 'Product A', '10.00']) %}
+```
+
 **Note:** The `sheets` configuration only works with XLSX exports. If you use it with `csv()`, it will be ignored and a standard single-sheet CSV will be generated.
 
 Brought to you by [Superbig](https://superbig.co)
