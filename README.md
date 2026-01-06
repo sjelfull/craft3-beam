@@ -116,4 +116,110 @@ These types are supported:
 | dollar      | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
 | euro        | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
 
+### Multiple sheets in Excel (XLSX only):
+
+You can create an Excel file with multiple sheets using the fluent `sheet()` method:
+
+```twig
+{% set beam = craft.beam.create() %}
+{% do beam.setFilename('users-by-group') %}
+
+{# Create and populate sheets using fluent methods #}
+{% for group in craft.users.groups() %}
+    {% set users = craft.users().group(group.handle).all() %}
+    
+    {# Select/create a sheet and set its header #}
+    {% do beam.sheet(group.name).setHeader(['Email', 'Full Name']) %}
+    
+    {# Append users to the active sheet #}
+    {% for user in users %}
+        {% do beam.append([user.email, user.fullName]) %}
+    {% endfor %}
+{% endfor %}
+
+{% do beam.xlsx() %}
+```
+
+You can switch between sheets as needed:
+
+```twig
+{% set beam = craft.beam.create() %}
+
+{# Set 'Summary' as the active sheet #}
+{% do beam.setSheet('Summary') %}
+{% do beam.setHeader(['Total Users', 'Active', 'Inactive']) %}
+{% do beam.append([100, 75, 25]) %}
+
+{# Switch to 'Details' sheet #}
+{% do beam.sheet('Details').setHeader(['Email', 'Name', 'Status']) %}
+{% do beam.append(['john@example.com', 'John', 'Active']) %}
+
+{% do beam.xlsx() %}
+```
+
+The `sheet()` method also accepts an options array as the second parameter:
+
+```twig
+{% do beam.sheet('Products', {
+    header: ['ID', 'Name', 'Price']
+}) %}
+{% do beam.append(['1', 'Product A', '10.00']) %}
+```
+
+#### Alternative: Using array-based configuration
+
+If you need to configure all sheets upfront, you can provide a `sheets` array in the options:
+
+```twig
+{% set options = {
+    filename: 'users-report',
+    sheets: [
+        {
+            name: 'Active Users',
+            header: ['Email', 'Name', 'Status'],
+            content: [
+                [ 'john@example.com', 'John Doe', 'Active' ],
+                [ 'jane@example.com', 'Jane Doe', 'Active' ],
+            ]
+        },
+        {
+            name: 'Inactive Users',
+            header: ['Email', 'Name', 'Status'],
+            content: [
+                [ 'inactive@example.com', 'Bob Smith', 'Inactive' ],
+            ]
+        }
+    ]
+} %}
+{% set beam = craft.beam.create(options) %}
+{% do beam.xlsx() %}
+```
+
+Or build the sheets array dynamically with `setSheets()`:
+
+```twig
+{% set beam = craft.beam.create() %}
+{% do beam.setFilename('users-by-group') %}
+
+{% set sheets = [] %}
+{% for group in craft.users.groups() %}
+    {% set users = craft.users().group(group.handle).all() %}
+    {% set sheetContent = [] %}
+    {% for user in users %}
+        {% set sheetContent = sheetContent|merge([[ user.email, user.fullName ]]) %}
+    {% endfor %}
+    
+    {% set sheets = sheets|merge([{
+        name: group.name,
+        header: ['Email', 'Full Name'],
+        content: sheetContent
+    }]) %}
+{% endfor %}
+
+{% do beam.setSheets(sheets) %}
+{% do beam.xlsx() %}
+```
+
+**Note:** The `sheets` configuration only works with XLSX exports. If you use it with `csv()`, it will be ignored and a standard single-sheet CSV will be generated.
+
 Brought to you by [Superbig](https://superbig.co)
