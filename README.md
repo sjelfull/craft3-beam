@@ -132,6 +132,20 @@ Soft newlines (line breaks within cells) are supported in XLSX files. Simply use
 {% do beam.xlsx() %}
 ```
 
+You can also join arrays with newlines to create multi-line cells:
+
+```twig
+{% set myArray = ['Item 1', 'Item 2', 'Item 3'] %}
+{% set options = {
+    header: ['Name', 'Items'],
+    content: [
+        [ 'Order 1', myArray|join("\n") ],
+    ]
+} %}
+{% set beam = craft.beam.create(options) %}
+{% do beam.xlsx() %}
+```
+
 Text wrapping is enabled by default to properly display multi-line content. If you need to disable it:
 
 ```twig
