@@ -93,10 +93,11 @@ class BeamService extends Component
         $sheetsWritten = 0;
 
         // Check if multiple sheets are configured
-        if (!empty($model->sheets)) {
+        if (isset($model->sheets) && is_array($model->sheets) && count($model->sheets) > 0) {
             // Handle multiple sheets
             foreach ($model->sheets as $index => $sheet) {
                 $sheetName = $sheet['name'] ?? 'Sheet' . ($index + 1);
+                $sheetName = $this->sanitizeSheetName($sheetName);
                 $sheetHeader = $sheet['header'] ?? [];
                 $sheetContent = $sheet['content'] ?? [];
 
@@ -223,6 +224,34 @@ class BeamService extends Component
         foreach ($content as $row) {
             $writer->writeSheetRow($sheetName, $row);
         }
+    }
+
+    private function sanitizeSheetName(string $name): string
+    {
+        // Excel sheet names have these constraints:
+        // - Maximum 31 characters
+        // - Cannot contain: \ / ? * [ ] :
+        // - Cannot be empty
+
+        // Remove invalid characters
+        $name = str_replace(['\\', '/', '?', '*', '[', ']', ':'], '', $name);
+
+        // Trim whitespace
+        $name = trim($name);
+
+        // Limit to 31 characters
+        if (mb_strlen($name) > 31) {
+            $name = mb_substr($name, 0, 31);
+            // Trim again in case truncation left trailing spaces
+            $name = trim($name);
+        }
+
+        // Ensure not empty
+        if (empty($name)) {
+            $name = 'Sheet';
+        }
+
+        return $name;
     }
 
     private function normalizeCellFormat(string $type): string
