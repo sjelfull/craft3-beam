@@ -279,6 +279,7 @@ class BeamService extends Component
     /**
      * Write content to the configured filesystem
      * @throws InvalidConfigException
+     * @throws Exception
      */
     private function writeToFilesystem(string $filename, string $content): void
     {
@@ -286,6 +287,11 @@ class BeamService extends Component
         $path = $this->getFilesystemSubfolder() . $filename;
         
         $stream = fopen('php://temp', 'r+');
+        
+        if ($stream === false) {
+            throw new Exception("Failed to create temporary stream for writing file: {$filename}");
+        }
+        
         fwrite($stream, $content);
         rewind($stream);
         
@@ -299,6 +305,7 @@ class BeamService extends Component
     /**
      * Read content from the configured filesystem
      * @throws InvalidConfigException
+     * @throws Exception
      */
     public function readFromFilesystem(string $filename): string
     {
@@ -310,6 +317,10 @@ class BeamService extends Component
         
         if (is_resource($stream)) {
             fclose($stream);
+        }
+        
+        if ($content === false) {
+            throw new Exception("Failed to read content from file: {$filename}");
         }
         
         return $content;
