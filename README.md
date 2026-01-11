@@ -222,4 +222,22 @@ Or build the sheets array dynamically with `setSheets()`:
 
 **Note:** The `sheets` configuration only works with XLSX exports. If you use it with `csv()`, it will be ignored and a standard single-sheet CSV will be generated.
 
+## Load-balanced environments
+
+If you're running on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), you may experience intermittent download failures when temporary files are stored on the local filesystem.
+
+Configure Craft to use a shared filesystem for temporary files by setting `tempAssetUploadFs` in your `config/general.php`:
+
+```php
+return [
+    '*' => [
+        'tempAssetUploadFs' => 's3', // use your filesystem handle
+    ],
+];
+```
+
+Or use the `CRAFT_TEMP_ASSET_UPLOAD_FS` environment variable.
+
+See the [Craft documentation](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs) for more details.
+
 Brought to you by [Superbig](https://superbig.co)
