@@ -60,7 +60,7 @@ class BeamService extends Component
 
         if (!empty($header)) {
             $headerValues = array_map(fn($value) => is_array($value) ? $value['text'] ?? 'No text set' : $value, $header);
-            $csv->insertOne($header);
+            $csv->insertOne($headerValues);
         }
 
         $mimeType = 'text/csv';
