@@ -50,9 +50,6 @@ class DefaultController extends Controller
             throw new NotFoundHttpException('File not found');
         }
 
-        // Read the file content from the filesystem
-        $content = $fs->read($tempFilename);
-
         // Check if automatic cleanup is enabled
         if (Beam::$plugin->getSettings()->deleteFilesAfterDownload) {
             // Use Craft's onAfterRequest to clean up the file after the request is complete
@@ -67,9 +64,19 @@ class DefaultController extends Controller
             });
         }
 
-        // Send the file content as a download
-        return Craft::$app->getResponse()->sendContentAsFile($content, $filename, [
-            'mimeType' => $config['mimeType'],
-        ]);
+        // Stream the file directly to avoid memory exhaustion with large files
+        try {
+            $stream = $fs->readStream($tempFilename);
+            return Craft::$app->getResponse()->sendStreamAsFile($stream, $filename, [
+                'mimeType' => $config['mimeType'],
+            ]);
+        } catch (\Throwable $e) {
+            // Fallback to reading content if streaming is not supported
+            Craft::warning("Failed to stream file, falling back to content read: {$e->getMessage()}", __METHOD__);
+            $content = $fs->read($tempFilename);
+            return Craft::$app->getResponse()->sendContentAsFile($content, $filename, [
+                'mimeType' => $config['mimeType'],
+            ]);
+        }
     }
 }
