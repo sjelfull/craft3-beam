@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Files are now written to beam-prefixed paths in the temp filesystem (e.g., `beam/randomstring-filename.csv`)
 - Changed from local file operations to filesystem abstraction layer for compatibility with any volume type (local, S3, etc.)
 
+### Fixed
+- Fixed potential memory exhaustion DoS vulnerability by streaming files instead of loading them entirely into memory
+
 ## 5.0.0 - 2024-04-23
 
 ### Added
