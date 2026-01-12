@@ -1,120 +1,440 @@
-# Beam plugin for Craft CMS 3.x
+# Beam for Craft CMS
 
-Generate CSVs and XLS files in your templates
+[![Latest Version](https://img.shields.io/github/release/sjelfull/craft3-beam.svg?style=flat-square)](https://github.com/sjelfull/craft3-beam/releases)
+[![License](https://img.shields.io/github/license/sjelfull/craft3-beam.svg?style=flat-square)](LICENSE.md)
+
+> Generate CSV and Excel (XLSX) files directly from your Craft CMS templates
 
 ![Screenshot](resources/img/plugin-logo.png)
 
+## Table of contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Usage guide](#usage-guide)
+  - [Basic usage](#basic-usage)
+  - [Output formats](#output-formats)
+  - [Dynamic content](#dynamic-content)
+  - [Configuration methods](#configuration-methods)
+- [Advanced features](#advanced-features)
+  - [Custom cell formatting](#custom-cell-formatting)
+  - [Supported format types](#supported-format-types)
+  - [Multiple sheets](#multiple-sheets-xlsx-only)
+  - [Soft newlines](#soft-newlines-in-xlsx-cells)
+- [Common use cases](#common-use-cases)
+- [Load-balanced environments](#load-balanced-environments)
+- [About](#about)
+
 ## Requirements
 
-This plugin requires Craft CMS 3.0.0-beta.23 or later.
+- Craft CMS 5.0.0 or later
+- PHP 8.2 or later
+
+<details>
+<summary>Legacy version support</summary>
+
+For older Craft CMS versions:
+- **Craft 4**: Use Beam 3.x
+- **Craft 3**: Use Beam 2.x
+</details>
 
 ## Installation
 
-To install the plugin, follow these instructions.
+Install via Composer from your Craft project directory:
 
-1. Open your terminal and go to your Craft project:
+```bash
+composer require superbig/craft3-beam
+```
 
-        cd /path/to/project
+> **Note:** The package name is `superbig/craft3-beam` for all Craft CMS versions (3, 4, and 5). The version automatically installed matches your Craft version.
 
-2. Then tell Composer to load the plugin:
+Then install the plugin in the Craft Control Panel:
+1. Go to **Settings → Plugins**
+2. Find **Beam** and click **Install**
 
-        composer require superbig/craft3-beam
+## Quick start
 
-3. In the Control Panel, go to Settings → Plugins and click the “Install” button for Beam.
-
-## Using Beam
-
-The starting point when working with Beam is to create a instance:
+Generate a CSV file with just a few lines:
 
 ```twig
-{% set options = {
+{% set beam = craft.beam.create({
+    header: ['Name', 'Email'],
+    content: [
+        ['John Doe', 'john@example.com'],
+        ['Jane Doe', 'jane@example.com']
+    ]
+}) %}
+{% do beam.csv() %}
+```
+
+That's it! The file will automatically download in the user's browser.
+
+## Usage guide
+
+### Basic usage
+
+Every Beam export starts by creating a Beam instance with `craft.beam.create()`:
+
+```twig
+{% set beam = craft.beam.create({
     header: ['Email', 'Name'],
     content: [
-        [ 'test@example.com', 'John Doe' ],
-        [ 'another+test@example.com', 'Jane Doe' ],
-        [ 'third+test@example.com', 'Trond Johansen' ],
+        ['test@example.com', 'John Doe'],
+        ['another@example.com', 'Jane Doe'],
+        ['third@example.com', 'Trond Johansen']
     ]
-} %}
-{% set beam = craft.beam.create(options) %}
+}) %}
 ```
 
-This will return a `BeamModel` behind the scenes.
+### Output formats
 
-If you want to append content dynamically, say from a loop, you can use the `append` method:
-
-```twig
-{% set myUserQuery = craft.users()
-    .group('authors') %}
-
-{# Fetch the users #}
-{% set users = myUserQuery.all() %}
-
-{# Display the list #}
-{% for user in users %}
-    {% do beam.append([user.username, user.name, user.email]) %}
-{% endfor %}
-```
-
-### To generate an CSV:
+#### Generate CSV
 ```twig
 {% do beam.csv() %}
 ```
 
-### To generate an XLSX:
+#### Generate Excel (XLSX)
 ```twig
 {% do beam.xlsx() %}
 ```
 
-### Changing config on the fly
+### Dynamic content
 
-To set the header of the file (the first row):
+Build your export dynamically using loops and the `append()` method:
+
 ```twig
-{% do beam.setHeader([ 'Username', 'Name', 'Email' ]) %}
-``` 
+{# Create beam with headers #}
+{% set beam = craft.beam.create({
+    header: ['Username', 'Name', 'Email']
+}) %}
 
-To set the filename:
+{# Append data from entries or users #}
+{% set users = craft.users().group('authors').all() %}
+{% for user in users %}
+    {% do beam.append([user.username, user.name, user.email]) %}
+{% endfor %}
+
+{# Generate the file #}
+{% do beam.csv() %}
+```
+
+### Configuration methods
+
+Beam provides several methods to customize your export:
+
+<details>
+<summary><strong>Set Custom Filename</strong></summary>
+
 ```twig
 {% set currentDate = now|date('Y-m-d') %}
-{% do beam.setFilename("report-#{currentDate}") %}
+{% do beam.setFilename("user-report-#{currentDate}") %}
 ```
+</details>
 
-To overwrite the content:
+<details>
+<summary><strong>Update Headers</strong></summary>
+
+```twig
+{% do beam.setHeader(['Username', 'Full Name', 'Email Address']) %}
+```
+</details>
+
+<details>
+<summary><strong>Replace Content</strong></summary>
+
 ```twig
 {% do beam.setContent([
-    [ 'test@example.com', 'John Doe' ],
-    [ 'another+test@example.com', 'Jane Doe' ],
-    [ 'third+test@example.com', 'Trond Johansen' ],
+    ['test@example.com', 'John Doe'],
+    ['another@example.com', 'Jane Doe']
 ]) %}
 ```
+</details>
 
-### Custom cell formatting is supported for XLSX:
+## Advanced features
+
+### Custom cell formatting
+
+Excel (XLSX) files support custom cell formatting. Define column types in the header:
+
+```twig
+{% set beam = craft.beam.create({
+    header: [
+        'Email',
+        'Name',
+        { text: 'Amount', type: 'price' },
+        { text: 'Date', type: 'date' }
+    ],
+    content: [
+        ['john@example.com', 'John Doe', 1500.50, '2024-01-15'],
+        ['jane@example.com', 'Jane Doe', 2300.75, '2024-01-16']
+    ]
+}) %}
+{% do beam.xlsx() %}
+```
+
+### Supported format types
+
+| Type     | Excel Format                              | Example Output      |
+|----------|-------------------------------------------|---------------------|
+| string   | @                                         | Text                |
+| integer  | 0                                         | 12345               |
+| date     | YYYY-MM-DD                                | 2024-01-15          |
+| datetime | YYYY-MM-DD HH:MM:SS                       | 2024-01-15 14:30:00 |
+| time     | HH:MM:SS                                  | 14:30:00            |
+| price    | #,##0.00                                  | 1,234.56            |
+| dollar   | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 | $1,234.56           |
+| euro     | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] | €1.234,56           |
+
+### Multiple sheets (XLSX only)
+
+You can create an Excel file with multiple sheets using the fluent `sheet()` method:
+
+```twig
+{% set beam = craft.beam.create() %}
+{% do beam.setFilename('users-by-group') %}
+
+{# Create and populate sheets using fluent methods #}
+{% for group in craft.users.groups() %}
+    {% set users = craft.users().group(group.handle).all() %}
+    
+    {# Select/create a sheet and set its header #}
+    {% do beam.sheet(group.name).setHeader(['Email', 'Full Name']) %}
+    
+    {# Append users to the active sheet #}
+    {% for user in users %}
+        {% do beam.append([user.email, user.fullName]) %}
+    {% endfor %}
+{% endfor %}
+
+{% do beam.xlsx() %}
+```
+
+You can switch between sheets as needed:
+
+```twig
+{% set beam = craft.beam.create() %}
+
+{# Set 'Summary' as the active sheet #}
+{% do beam.setSheet('Summary') %}
+{% do beam.setHeader(['Total Users', 'Active', 'Inactive']) %}
+{% do beam.append([100, 75, 25]) %}
+
+{# Switch to 'Details' sheet #}
+{% do beam.sheet('Details').setHeader(['Email', 'Name', 'Status']) %}
+{% do beam.append(['john@example.com', 'John', 'Active']) %}
+
+{% do beam.xlsx() %}
+```
+
+<details>
+<summary><strong>More sheet configuration options</strong></summary>
+
+The `sheet()` method also accepts an options array as the second parameter:
+
+```twig
+{% do beam.sheet('Products', {
+    header: ['ID', 'Name', 'Price']
+}) %}
+{% do beam.append(['1', 'Product A', '10.00']) %}
+```
+
+#### Alternative: Using array-based configuration
+
+If you need to configure all sheets upfront, you can provide a `sheets` array in the options:
 
 ```twig
 {% set options = {
-    header: ['Email', 'Name', { text: 'Number', type: 'number' }, { text: 'Date', type: 'date' }],
-    content: [
-        [ 'test@example.com', 'John Doe', 100000, '2022-06-10'],
-        [ 'another+test@example.com', 'Jane Doe', 252323, '2022-06-22'],
-        [ 'third+test@example.com', 'Trond Johansen', 30, '2022-06-22'],
-        [ 'third+test@example.com', 'Trond Johansen', 6233, '2023-06-22'],
+    filename: 'users-report',
+    sheets: [
+        {
+            name: 'Active Users',
+            header: ['Email', 'Name', 'Status'],
+            content: [
+                [ 'john@example.com', 'John Doe', 'Active' ],
+                [ 'jane@example.com', 'Jane Doe', 'Active' ],
+            ]
+        },
+        {
+            name: 'Inactive Users',
+            header: ['Email', 'Name', 'Status'],
+            content: [
+                [ 'inactive@example.com', 'Bob Smith', 'Inactive' ],
+            ]
+        }
     ]
 } %}
 {% set beam = craft.beam.create(options) %}
-{%  do beam.xlsx() %}
+{% do beam.xlsx() %}
 ```
 
-These types are supported:
+Or build the sheets array dynamically with `setSheets()`:
 
-| Format Type | Maps to the following cell format         |
-|-------------|-------------------------------------------|
-| string      | @                                         |
-| integer     | 0                                         |
-| date        | YYYY-MM-DD                                |
-| datetime    | YYYY-MM-DD HH:MM:SS                       |
-| time        | HH:MM:SS                                  |
-| price       | #,##0.00                                  |
-| dollar      | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
-| euro        | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
+```twig
+{% set beam = craft.beam.create() %}
+{% do beam.setFilename('users-by-group') %}
+
+{% set sheets = [] %}
+{% for group in craft.users.groups() %}
+    {% set users = craft.users().group(group.handle).all() %}
+    {% set sheetContent = [] %}
+    {% for user in users %}
+        {% set sheetContent = sheetContent|merge([[ user.email, user.fullName ]]) %}
+    {% endfor %}
+    
+    {% set sheets = sheets|merge([{
+        name: group.name,
+        header: ['Email', 'Full Name'],
+        content: sheetContent
+    }]) %}
+{% endfor %}
+
+{% do beam.setSheets(sheets) %}
+{% do beam.xlsx() %}
+```
+
+**Note:** The `sheets` configuration only works with XLSX exports. If you use it with `csv()`, it will be ignored and a standard single-sheet CSV will be generated.
+</details>
+
+### Soft newlines in XLSX cells
+
+Soft newlines (line breaks within cells) are supported in XLSX files. Simply use `\n` in your cell content:
+
+```twig
+{% set options = {
+    header: ['Name', 'Address'],
+    content: [
+        [ 'John Doe', "123 Main St\nApt 4B\nNew York, NY" ],
+        [ 'Jane Smith', "456 Oak Ave\nSuite 200\nLos Angeles, CA" ],
+    ]
+} %}
+{% set beam = craft.beam.create(options) %}
+{% do beam.xlsx() %}
+```
+
+You can also join arrays with newlines to create multi-line cells:
+
+```twig
+{% set myArray = ['Item 1', 'Item 2', 'Item 3'] %}
+{% set options = {
+    header: ['Name', 'Items'],
+    content: [
+        [ 'Order 1', myArray|join("\n") ],
+    ]
+} %}
+{% set beam = craft.beam.create(options) %}
+{% do beam.xlsx() %}
+```
+
+Text wrapping is enabled by default to properly display multi-line content. If you need to disable it:
+
+```twig
+{% do beam.setWrapText(false) %}
+```
+
+## Common use cases
+
+<details>
+<summary><strong>Export Entry Data</strong></summary>
+
+```twig
+{% set beam = craft.beam.create({
+    header: ['Title', 'Author', 'Date Published', 'URL']
+}) %}
+
+{% set entries = craft.entries()
+    .section('blog')
+    .orderBy('postDate DESC')
+    .all() %}
+
+{% for entry in entries %}
+    {% do beam.append([
+        entry.title,
+        entry.author.fullName,
+        entry.postDate|date('Y-m-d'),
+        entry.url
+    ]) %}
+{% endfor %}
+
+{% do beam.csv() %}
+```
+</details>
+
+<details>
+<summary><strong>Export Commerce Orders</strong></summary>
+
+> **Note:** This example requires [Craft Commerce](https://craftcms.com/commerce) to be installed.
+
+```twig
+{% set beam = craft.beam.create({
+    header: ['Order Number', 'Customer', 'Total', 'Date', 'Status']
+}) %}
+
+{% set orders = craft.orders()
+    .isCompleted(true)
+    .orderBy('dateOrdered DESC')
+    .all() %}
+
+{% for order in orders %}
+    {% do beam.append([
+        order.number,
+        order.email,
+        order.totalPrice,
+        order.dateOrdered|date('Y-m-d'),
+        order.orderStatus
+    ]) %}
+{% endfor %}
+
+{% do beam.xlsx() %}
+```
+</details>
+
+<details>
+<summary><strong>Export with Formatted Numbers</strong></summary>
+
+```twig
+{% set beam = craft.beam.create({
+    header: [
+        'Product',
+        { text: 'Price', type: 'dollar' },
+        { text: 'Quantity', type: 'integer' },
+        { text: 'Total', type: 'dollar' }
+    ]
+}) %}
+
+{% set products = craft.entries().section('products').all() %}
+{% for product in products %}
+    {% do beam.append([
+        product.title,
+        product.price,
+        product.stock,
+        product.price * product.stock
+    ]) %}
+{% endfor %}
+
+{% do beam.xlsx() %}
+```
+</details>
+
+## Load-balanced environments
+
+If you're running on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), you may experience intermittent download failures when temporary files are stored on the local filesystem.
+
+Configure Craft to use a shared filesystem for temporary files by setting `tempAssetUploadFs` in your `config/general.php`:
+
+```php
+return [
+    '*' => [
+        'tempAssetUploadFs' => 's3', // use your filesystem handle
+    ],
+];
+```
+
+Or use the `CRAFT_TEMP_ASSET_UPLOAD_FS` environment variable.
+
+See the [Craft documentation](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs) for more details.
+
+## About
 
 ### Multiple sheets in Excel (XLSX only):
 
@@ -277,3 +597,8 @@ Or use the `CRAFT_TEMP_ASSET_UPLOAD_FS` environment variable.
 See the [Craft documentation](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs) for more details.
 
 Brought to you by [Superbig](https://superbig.co)
+
+**Useful Resources:**
+- [Report Issues](https://github.com/sjelfull/craft3-beam/issues)
+- [View Changelog](https://github.com/sjelfull/craft3-beam/blob/main/CHANGELOG.md)
+- [Superbig Website](https://superbig.co)
