@@ -93,7 +93,7 @@ class BeamService extends Component
         $sheetsWritten = 0;
 
         // Check if multiple sheets are configured
-        if (isset($model->sheets) && is_array($model->sheets) && count($model->sheets) > 0) {
+        if (count($model->sheets) > 0) {
             // Handle multiple sheets
             foreach ($model->sheets as $index => $sheet) {
                 $sheetName = $sheet['name'] ?? 'Sheet' . ($index + 1);
