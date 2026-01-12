@@ -29,7 +29,7 @@
 ## Requirements
 
 - Craft CMS 5.0.0 or later
-- PHP 8.0.2 or later
+- PHP 8.2 or later
 
 <details>
 <summary>Legacy version support</summary>
