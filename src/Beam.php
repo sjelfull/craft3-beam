@@ -11,11 +11,13 @@
 namespace superbig\beam;
 
 use Craft;
+use craft\base\Model;
 use craft\base\Plugin;
 
 use craft\events\RegisterUrlRulesEvent;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
+use superbig\beam\models\Settings;
 use superbig\beam\services\BeamService as BeamServiceService;
 use superbig\beam\variables\BeamVariable;
 
@@ -29,6 +31,8 @@ use yii\base\Event;
  * @since     2.0.0
  *
  * @property  BeamServiceService $beamService
+ * @property  Settings $settings
+ * @method    Settings getSettings()
  */
 class Beam extends Plugin
 {
@@ -39,6 +43,16 @@ class Beam extends Plugin
      * @var Beam
      */
     public static $plugin;
+
+    /**
+     * @var string
+     */
+    public string $schemaVersion = '5.1.0';
+
+    /**
+     * @var bool
+     */
+    public bool $hasCpSettings = true;
 
     // Public Methods
     // =========================================================================
@@ -84,6 +98,30 @@ class Beam extends Plugin
                 ['name' => $this->name]
             ),
             __METHOD__
+        );
+    }
+
+    // Protected Methods
+    // =========================================================================
+
+    /**
+     * @inheritdoc
+     */
+    protected function createSettingsModel(): ?Model
+    {
+        return new Settings();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function settingsHtml(): ?string
+    {
+        return Craft::$app->view->renderTemplate(
+            'beam/settings',
+            [
+                'settings' => $this->getSettings()
+            ]
         );
     }
 }

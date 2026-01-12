@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.1.0 - TBD
+
+### Added
+- Added opt-in setting to automatically delete temporary files after download
+- Added plugin settings page in Control Panel
+
+### Changed
+- Temporary files are now kept by default (opt-in to automatic cleanup via settings)
+
 ## 5.0.0 - 2024-04-23
 
 ### Added

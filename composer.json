@@ -58,8 +58,8 @@
     "extra": {
         "name": "Beam",
         "handle": "beam",
-        "schemaVersion": "2.0.0",
-        "hasCpSettings": false,
+        "schemaVersion": "5.1.0",
+        "hasCpSettings": true,
         "hasCpSection": false,
         "changelogUrl": "https://raw.githubusercontent.com/sjelfull/craft3-beam/master/CHANGELOG.md",
         "components": {

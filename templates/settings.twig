@@ -1,0 +1,10 @@
+{% import "_includes/forms" as forms %}
+
+{{ forms.lightswitchField({
+    label: 'Delete Files After Download',
+    instructions: 'Automatically delete temporary CSV/XLSX files after they are downloaded. When disabled, files will remain in the temp directory and should be cleaned up manually or via a cron job.',
+    id: 'deleteFilesAfterDownload',
+    name: 'deleteFilesAfterDownload',
+    on: settings.deleteFilesAfterDownload,
+    warning: settings.deleteFilesAfterDownload ? 'Files will be automatically deleted after download.' : 'You will need to manually clean up temporary files in storage/runtime/temp/beam/ or set up a cron job.'
+}) }}

@@ -116,11 +116,22 @@ These types are supported:
 | dollar      | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 |
 | euro        | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] |
 
-## Temporary File Management
+## Configuration
 
-Beam creates temporary files in Craft's temp directory (under `/storage/runtime/temp/beam/`) when generating CSV and XLSX files. These files are automatically cleaned up after download.
+### Temporary File Management
 
-If you experience issues with temporary files accumulating (e.g., due to failed downloads or interrupted requests), you can manually clean them up by running:
+Beam creates temporary files in Craft's temp directory (under `/storage/runtime/temp/beam/`) when generating CSV and XLSX files.
+
+By default, these files are **not** automatically deleted. You can enable automatic cleanup after download in the plugin settings:
+
+1. Go to **Settings → Plugins → Beam** in the Control Panel
+2. Enable the **Delete Files After Download** setting
+
+When this setting is enabled, temporary files will be automatically deleted after they are downloaded.
+
+#### Manual Cleanup
+
+If automatic cleanup is disabled, you should periodically clean up the temp directory manually:
 
 ```bash
 rm -rf /path/to/craft/storage/runtime/temp/beam/*
