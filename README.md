@@ -7,23 +7,23 @@
 
 ![Screenshot](resources/img/plugin-logo.png)
 
-## Table of Contents
+## Table of contents
 
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage Guide](#usage-guide)
-  - [Basic Usage](#basic-usage)
-  - [Output Formats](#output-formats)
-  - [Dynamic Content](#dynamic-content)
-  - [Configuration Methods](#configuration-methods)
-- [Advanced Features](#advanced-features)
-  - [Custom Cell Formatting](#custom-cell-formatting)
-  - [Supported Format Types](#supported-format-types)
-  - [Multiple Sheets](#multiple-sheets-xlsx-only)
-  - [Soft Newlines](#soft-newlines-in-xlsx-cells)
-- [Common Use Cases](#common-use-cases)
-- [Load-Balanced Environments](#load-balanced-environments)
+- [Quick start](#quick-start)
+- [Usage guide](#usage-guide)
+  - [Basic usage](#basic-usage)
+  - [Output formats](#output-formats)
+  - [Dynamic content](#dynamic-content)
+  - [Configuration methods](#configuration-methods)
+- [Advanced features](#advanced-features)
+  - [Custom cell formatting](#custom-cell-formatting)
+  - [Supported format types](#supported-format-types)
+  - [Multiple sheets](#multiple-sheets-xlsx-only)
+  - [Soft newlines](#soft-newlines-in-xlsx-cells)
+- [Common use cases](#common-use-cases)
+- [Load-balanced environments](#load-balanced-environments)
 - [About](#about)
 
 ## Requirements
@@ -53,7 +53,7 @@ Then install the plugin in the Craft Control Panel:
 1. Go to **Settings → Plugins**
 2. Find **Beam** and click **Install**
 
-## Quick Start
+## Quick start
 
 Generate a CSV file with just a few lines:
 
@@ -70,9 +70,9 @@ Generate a CSV file with just a few lines:
 
 That's it! The file will automatically download in the user's browser.
 
-## Usage Guide
+## Usage guide
 
-### Basic Usage
+### Basic usage
 
 Every Beam export starts by creating a Beam instance with `craft.beam.create()`:
 
@@ -87,7 +87,7 @@ Every Beam export starts by creating a Beam instance with `craft.beam.create()`:
 }) %}
 ```
 
-### Output Formats
+### Output formats
 
 #### Generate CSV
 ```twig
@@ -99,7 +99,7 @@ Every Beam export starts by creating a Beam instance with `craft.beam.create()`:
 {% do beam.xlsx() %}
 ```
 
-### Dynamic Content
+### Dynamic content
 
 Build your export dynamically using loops and the `append()` method:
 
@@ -119,7 +119,7 @@ Build your export dynamically using loops and the `append()` method:
 {% do beam.csv() %}
 ```
 
-### Configuration Methods
+### Configuration methods
 
 Beam provides several methods to customize your export:
 
@@ -151,9 +151,9 @@ Beam provides several methods to customize your export:
 ```
 </details>
 
-## Advanced Features
+## Advanced features
 
-### Custom Cell Formatting
+### Custom cell formatting
 
 Excel (XLSX) files support custom cell formatting. Define column types in the header:
 
@@ -173,7 +173,7 @@ Excel (XLSX) files support custom cell formatting. Define column types in the he
 {% do beam.xlsx() %}
 ```
 
-### Supported Format Types
+### Supported format types
 
 | Type     | Excel Format                              | Example Output      |
 |----------|-------------------------------------------|---------------------|
@@ -186,7 +186,7 @@ Excel (XLSX) files support custom cell formatting. Define column types in the he
 | dollar   | [$$-1009]#,##0.00;[RED]-[$$-1009]#,##0.00 | $1,234.56           |
 | euro     | #,##0.00 [$€-407];[RED]-#,##0.00 [$€-407] | €1.234,56           |
 
-### Multiple Sheets (XLSX only)
+### Multiple sheets (XLSX only)
 
 You can create an Excel file with multiple sheets using the fluent `sheet()` method:
 
@@ -296,7 +296,7 @@ Or build the sheets array dynamically with `setSheets()`:
 **Note:** The `sheets` configuration only works with XLSX exports. If you use it with `csv()`, it will be ignored and a standard single-sheet CSV will be generated.
 </details>
 
-### Soft Newlines in XLSX Cells
+### Soft newlines in XLSX cells
 
 Soft newlines (line breaks within cells) are supported in XLSX files. Simply use `\n` in your cell content:
 
@@ -332,7 +332,7 @@ Text wrapping is enabled by default to properly display multi-line content. If y
 {% do beam.setWrapText(false) %}
 ```
 
-## Common Use Cases
+## Common use cases
 
 <details>
 <summary><strong>Export Entry Data</strong></summary>
@@ -416,7 +416,7 @@ Text wrapping is enabled by default to properly display multi-line content. If y
 ```
 </details>
 
-## Load-Balanced Environments
+## Load-balanced environments
 
 If you're running on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), you may experience intermittent download failures when temporary files are stored on the local filesystem.
 
