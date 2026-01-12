@@ -222,6 +222,42 @@ Or build the sheets array dynamically with `setSheets()`:
 
 **Note:** The `sheets` configuration only works with XLSX exports. If you use it with `csv()`, it will be ignored and a standard single-sheet CSV will be generated.
 
+### Soft newlines in XLSX cells:
+
+Soft newlines (line breaks within cells) are supported in XLSX files. Simply use `\n` in your cell content:
+
+```twig
+{% set options = {
+    header: ['Name', 'Address'],
+    content: [
+        [ 'John Doe', "123 Main St\nApt 4B\nNew York, NY" ],
+        [ 'Jane Smith', "456 Oak Ave\nSuite 200\nLos Angeles, CA" ],
+    ]
+} %}
+{% set beam = craft.beam.create(options) %}
+{% do beam.xlsx() %}
+```
+
+You can also join arrays with newlines to create multi-line cells:
+
+```twig
+{% set myArray = ['Item 1', 'Item 2', 'Item 3'] %}
+{% set options = {
+    header: ['Name', 'Items'],
+    content: [
+        [ 'Order 1', myArray|join("\n") ],
+    ]
+} %}
+{% set beam = craft.beam.create(options) %}
+{% do beam.xlsx() %}
+```
+
+Text wrapping is enabled by default to properly display multi-line content. If you need to disable it:
+
+```twig
+{% do beam.setWrapText(false) %}
+```
+
 ## Load-balanced environments
 
 If you're running on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), you may experience intermittent download failures when temporary files are stored on the local filesystem.

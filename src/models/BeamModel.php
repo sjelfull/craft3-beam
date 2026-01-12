@@ -27,6 +27,7 @@ class BeamModel extends Model
     public string $filename = 'output';
     public string $sheetName = 'Sheet';
     public array $sheets = [];
+    public bool $wrapText = true;
     private ?string $activeSheet = null;
 
     public function init(): void
@@ -126,6 +127,13 @@ class BeamModel extends Model
     public function setSheets(array $sheets = []): static
     {
         $this->sheets = $sheets;
+
+        return $this;
+    }
+
+    public function setWrapText(bool $wrapText): static
+    {
+        $this->wrapText = $wrapText;
 
         return $this;
     }

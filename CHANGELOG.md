@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 - Added support for multiple sheets in Excel (XLSX) exports
+- Added soft newline support in XLSX cells with automatic text wrapping
 
 ## 5.0.0 - 2024-04-23
 

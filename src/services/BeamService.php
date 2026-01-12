@@ -60,7 +60,7 @@ class BeamService extends Component
 
         if (!empty($header)) {
             $headerValues = array_map(fn($value) => is_array($value) ? $value['text'] ?? 'No text set' : $value, $header);
-            $csv->insertOne($header);
+            $csv->insertOne($headerValues);
         }
 
         $mimeType = 'text/csv';
@@ -93,7 +93,7 @@ class BeamService extends Component
         $sheetsWritten = 0;
 
         // Check if multiple sheets are configured
-        if (isset($model->sheets) && is_array($model->sheets) && count($model->sheets) > 0) {
+        if (count($model->sheets) > 0) {
             // Handle multiple sheets
             foreach ($model->sheets as $index => $sheet) {
                 $sheetName = $sheet['name'] ?? 'Sheet' . ($index + 1);
@@ -105,7 +105,7 @@ class BeamService extends Component
                     continue;
                 }
 
-                $this->writeSheet($writer, $sheetName, $sheetHeader, $sheetContent);
+                $this->writeSheet($writer, $sheetName, $sheetHeader, $sheetContent, $model);
                 $sheetsWritten++;
             }
 
@@ -123,7 +123,7 @@ class BeamService extends Component
             }
 
             $sheetName = !empty($model->sheetName) ? $model->sheetName : 'Sheet';
-            $this->writeSheet($writer, $sheetName, $header, $content);
+            $this->writeSheet($writer, $sheetName, $header, $content, $model);
         }
 
         $mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -204,7 +204,7 @@ class BeamService extends Component
         return $config;
     }
 
-    private function writeSheet(XLSXWriter $writer, string $sheetName, array $header, array $content): void
+    private function writeSheet(XLSXWriter $writer, string $sheetName, array $header, array $content, BeamModel $model): void
     {
         if (!empty($header)) {
             $headers = [];
@@ -222,7 +222,8 @@ class BeamService extends Component
         }
 
         foreach ($content as $row) {
-            $writer->writeSheetRow($sheetName, $row);
+            $rowStyle = $model->wrapText ? ['wrap_text' => true] : [];
+            $writer->writeSheetRow($sheetName, $row, $rowStyle);
         }
     }
 
