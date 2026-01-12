@@ -12,7 +12,6 @@ namespace superbig\beam\services;
 
 use Craft;
 use craft\base\Component;
-use craft\helpers\FileHelper;
 use craft\helpers\StringHelper;
 
 use craft\helpers\UrlHelper;
