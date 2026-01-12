@@ -8,10 +8,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 - Added opt-in setting to automatically delete temporary files after download
-- Added plugin settings page in Control Panel
+- Added plugin settings page in Control Panel with environment variable support
+- Added support for Craft's temp asset upload filesystem for volume-agnostic file operations
 
 ### Changed
 - Temporary files are now kept by default (opt-in to automatic cleanup via settings)
+- Files are now written to beam-prefixed paths in the temp filesystem (e.g., `beam/randomstring-filename.csv`)
+- Changed from local file operations to filesystem abstraction layer for compatibility with any volume type (local, S3, etc.)
 
 ## 5.0.0 - 2024-04-23
 
