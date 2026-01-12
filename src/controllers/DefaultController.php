@@ -12,10 +12,9 @@ namespace superbig\beam\controllers;
 
 use Craft;
 
+use craft\helpers\FileHelper;
 use craft\web\Controller;
-use craft\web\Response;
 use superbig\beam\Beam;
-use yii\base\Event;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -48,17 +47,16 @@ class DefaultController extends Controller
 
         // Check if automatic cleanup is enabled
         if (Beam::$plugin->getSettings()->deleteFilesAfterDownload) {
-            // Use Yii's native event to clean up the file after the response is sent
-            // Use a one-time handler to prevent memory leaks
-            $handler = function() use ($path, &$handler) {
-                Event::off(Response::class, Response::EVENT_AFTER_SEND, $handler);
-                if (file_exists($path)) {
-                    if (!unlink($path)) {
-                        Craft::warning("Failed to delete temporary file: {$path}", __METHOD__);
+            // Use Craft's onAfterRequest to clean up the file after the request is complete
+            Craft::$app->onAfterRequest(function() use ($path) {
+                try {
+                    if (file_exists($path)) {
+                        FileHelper::unlink($path);
                     }
+                } catch (\Throwable $e) {
+                    Craft::warning("Failed to delete temporary file: {$path}. Error: " . $e->getMessage(), __METHOD__);
                 }
-            };
-            Event::on(Response::class, Response::EVENT_AFTER_SEND, $handler);
+            });
         }
 
         return Craft::$app->getResponse()->sendFile($path, $filename, [
