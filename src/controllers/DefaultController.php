@@ -12,7 +12,6 @@ namespace superbig\beam\controllers;
 
 use Craft;
 
-use craft\helpers\FileHelper;
 use craft\web\Controller;
 use superbig\beam\Beam;
 use yii\web\NotFoundHttpException;
@@ -42,24 +41,34 @@ class DefaultController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $path = $config['path'];
+        $tempFilename = $config['tempFilename'];
         $filename = $config['filename'];
+        $fs = Craft::$app->getTempAssetUploadFs();
+
+        // Check if file exists in the filesystem
+        if (!$fs->fileExists($tempFilename)) {
+            throw new NotFoundHttpException('File not found');
+        }
+
+        // Read the file content from the filesystem
+        $content = $fs->read($tempFilename);
 
         // Check if automatic cleanup is enabled
         if (Beam::$plugin->getSettings()->deleteFilesAfterDownload) {
             // Use Craft's onAfterRequest to clean up the file after the request is complete
-            Craft::$app->onAfterRequest(function() use ($path) {
+            Craft::$app->onAfterRequest(function() use ($fs, $tempFilename) {
                 try {
-                    if (file_exists($path)) {
-                        FileHelper::unlink($path);
+                    if ($fs->fileExists($tempFilename)) {
+                        $fs->deleteFile($tempFilename);
                     }
                 } catch (\Throwable $e) {
-                    Craft::warning("Failed to delete temporary file: {$path}. Error: " . $e->getMessage(), __METHOD__);
+                    Craft::warning("Failed to delete temporary file: {$tempFilename}. Error: " . $e->getMessage(), __METHOD__);
                 }
             });
         }
 
-        return Craft::$app->getResponse()->sendFile($path, $filename, [
+        // Send the file content as a download
+        return Craft::$app->getResponse()->sendContentAsFile($content, $filename, [
             'mimeType' => $config['mimeType'],
         ]);
     }

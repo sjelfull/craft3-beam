@@ -83,16 +83,11 @@ class BeamService extends Component
      */
     public function xlsx(BeamModel $model): void
     {
-        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
         $header = $model->header;
         $content = $model->content;
 
         if (empty($header) && empty($content)) {
             return;
-        }
-
-        if (!file_exists($tempPath) && !is_dir($tempPath)) {
-            FileHelper::createDirectory($tempPath);
         }
 
         // Load the CSV document from a string
@@ -138,8 +133,6 @@ class BeamService extends Component
 
         $config = $this->unhashConfig($hash);
 
-        $config['path'] = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR . $config['tempFilename'];
-
         return $config;
     }
 
@@ -152,8 +145,8 @@ class BeamService extends Component
      */
     private function writeAndRedirect(string $content, string $filename, string $mimeType): void
     {
-        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
-        $tempFilename = StringHelper::randomString(12) . "-{$filename}";
+        $fs = Craft::$app->getTempAssetUploadFs();
+        $tempFilename = 'beam/' . StringHelper::randomString(12) . "-{$filename}";
         $config = [
             'filename' => $filename,
             'tempFilename' => $tempFilename,
@@ -166,7 +159,7 @@ class BeamService extends Component
             'hash' => $verifyHash,
         ]);
 
-        FileHelper::writeToFile($tempPath . $tempFilename, $content);
+        $fs->write($tempFilename, $content);
 
         Craft::$app->getResponse()->redirect($url);
 
