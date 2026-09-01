@@ -6,7 +6,7 @@ if docker info >/dev/null 2>&1; then
 fi
 
 if ! sudo service docker start; then
-    sudo dockerd >/tmp/dockerd.log 2>&1 &
+    sudo dockerd --storage-driver=vfs >/tmp/dockerd.log 2>&1 &
 fi
 
 for _ in {1..30}; do
