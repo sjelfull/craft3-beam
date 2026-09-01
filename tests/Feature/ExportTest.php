@@ -1,6 +1,7 @@
 <?php
 
 use craft\helpers\FileHelper;
+use League\Csv\Bom;
 use League\Csv\Reader;
 use markhuot\craftpest\web\TestableResponse;
 use superbig\beam\Beam;
@@ -191,7 +192,7 @@ it('writes a parseable CSV with a BOM, formatted headers, commas, and newlines',
 
     $export = beamExport('csv', $model);
 
-    expect($export['bytes'])->toStartWith(Reader::BOM_UTF8);
+    expect($export['bytes'])->toStartWith(Bom::Utf8->value);
     expect($export['bytes'])->toContain('"Doe, Jane"');
     expect($export['bytes'])->toContain("\"Line one\nLine two\"");
 
