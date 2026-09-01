@@ -113,9 +113,10 @@ class BeamModel extends Model
 
     public function getFilename($ext = null)
     {
-        $filename = FileHelper::sanitizeFilename(pathinfo($this->filename, PATHINFO_FILENAME), [
-            'separator' => null,
-        ]);
+        $filename = FileHelper::sanitizeFilename(
+            pathinfo(preg_replace('/[\x00-\x1F\x7F]/', '', $this->filename) ?? '', PATHINFO_FILENAME),
+            ['separator' => null],
+        );
 
         return "$filename.$ext";
     }
