@@ -6,6 +6,7 @@ services:
     volumes:
       - .:/app
     working_dir: /app
+    network_mode: host
     depends_on:
       mysql:
         condition: service_healthy
@@ -22,7 +23,7 @@ services:
       CRAFT_ENVIRONMENT: dev
       CRAFT_SECURITY_KEY: asdy8f7tgaysdfas987gduyvfas87dfghui
       CRAFT_DB_DRIVER: mysql
-      CRAFT_DB_SERVER: mysql
+      CRAFT_DB_SERVER: 127.0.0.1
       CRAFT_DB_PORT: 3306
       CRAFT_DB_DATABASE: pest
       CRAFT_DB_USER: root

@@ -13,7 +13,7 @@ test: up
 	docker compose exec php bash run-tests.sh
 
 test-postgres: up
-	docker compose exec -e CRAFT_DB_DRIVER=pgsql -e CRAFT_DB_SERVER=postgres -e CRAFT_DB_PORT=5432 php bash run-tests.sh
+	docker compose exec -e CRAFT_DB_DRIVER=pgsql -e CRAFT_DB_SERVER=127.0.0.1 -e CRAFT_DB_PORT=5432 php bash run-tests.sh
 
 test-all: test test-postgres
 
