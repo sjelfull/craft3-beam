@@ -15,7 +15,7 @@ use yii\web\NotFoundHttpException;
 
 function beamTempPath(): string
 {
-    return Craft::$app->getPath()->getTempPath() . DIRECTORY_SEPARATOR . 'beam';
+    return beamPlugin()->beamService->getTempPath();
 }
 
 function beamPlugin(): Beam

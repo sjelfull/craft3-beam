@@ -13,7 +13,10 @@ namespace superbig\beam;
 use Craft;
 use craft\base\Plugin;
 
+use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterUrlRulesEvent;
+use craft\helpers\FileHelper;
+use craft\utilities\ClearCaches;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
 use superbig\beam\services\BeamService as BeamServiceService;
@@ -74,6 +77,24 @@ class Beam extends Plugin
                 /** @var CraftVariable $variable */
                 $variable = $event->sender;
                 $variable->set('beam', BeamVariable::class);
+            }
+        );
+
+        Event::on(
+            ClearCaches::class,
+            ClearCaches::EVENT_REGISTER_CACHE_OPTIONS,
+            function(RegisterCacheOptionsEvent $event) {
+                $event->options[] = [
+                    'key' => 'beam-temp',
+                    'label' => Craft::t('beam', 'Beam temp files'),
+                    'info' => Craft::t('beam', 'CSV and XLSX files written during exports'),
+                    'action' => function() {
+                        $dir = self::$plugin->beamService->getTempPath();
+                        if (is_dir($dir)) {
+                            FileHelper::clearDirectory($dir);
+                        }
+                    },
+                ];
             }
         );
 

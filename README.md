@@ -24,6 +24,7 @@
   - [Soft newlines](#soft-newlines-in-xlsx-cells)
 - [Common use cases](#common-use-cases)
 - [Load-balanced environments](#load-balanced-environments)
+- [Temporary files](#temporary-files)
 - [About](#about)
 
 ## Requirements
@@ -433,6 +434,18 @@ return [
 Or use the `CRAFT_TEMP_ASSET_UPLOAD_FS` environment variable.
 
 See the [Craft documentation](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs) for more details.
+
+## Temporary files
+
+Exports are written to Craft's temp path under a `beam/` folder (`storage/runtime/temp/beam/` by default) and are not deleted automatically.
+
+Clear them from **Utilities → Caches → Beam temp files**, or:
+
+```bash
+php craft clear-caches/beam-temp
+```
+
+`php craft clear-caches/all` also includes them. Craft's generic **Temp files** option / `php craft clear-caches/temp-files` clears the whole Craft temp folder, which includes Beam's files.
 
 ## About
 

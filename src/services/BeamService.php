@@ -42,6 +42,14 @@ class BeamService extends Component
     }
 
     /**
+     * Absolute path to Beam's export temp directory (under Craft's temp path).
+     */
+    public function getTempPath(): string
+    {
+        return Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam';
+    }
+
+    /**
      * @param BeamModel $model
      *
      * @return void
@@ -89,7 +97,7 @@ class BeamService extends Component
      */
     public function xlsx(BeamModel $model): void
     {
-        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
+        $tempPath = $this->getTempPath() . DIRECTORY_SEPARATOR;
 
         if (!file_exists($tempPath) && !is_dir($tempPath)) {
             FileHelper::createDirectory($tempPath);
@@ -152,7 +160,7 @@ class BeamService extends Component
 
         $config = $this->unhashConfig($hash);
 
-        $config['path'] = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR . $config['tempFilename'];
+        $config['path'] = $this->getTempPath() . DIRECTORY_SEPARATOR . $config['tempFilename'];
 
         return $config;
     }
@@ -166,7 +174,7 @@ class BeamService extends Component
      */
     private function writeAndRedirect(string $content, string $filename, string $mimeType): void
     {
-        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
+        $tempPath = $this->getTempPath() . DIRECTORY_SEPARATOR;
         $tempFilename = StringHelper::randomString(12) . "-{$filename}";
         $config = [
             'filename' => $filename,

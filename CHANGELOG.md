@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## Unreleased
 
+### Added
+- Beam temp files can be cleared from Utilities → Caches and `php craft clear-caches/beam-temp` ([#19](https://github.com/sjelfull/craft3-beam/issues/19))
+
 ## 5.0.1 - 2026-09-01
 
 ### Added
