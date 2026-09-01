@@ -168,6 +168,26 @@ function beamResponseBytes(TestableResponse $response): string
     return $bytes;
 }
 
+/**
+ * @return array{location: string, bytes: string}
+ */
+function beamDownloadFixture(string $filename, string $mimeType, string $bytes): array
+{
+    $plugin = beamPlugin();
+    $tempFilename = 'fixture-' . $filename;
+    FileHelper::writeToFile(beamTempPath() . DIRECTORY_SEPARATOR . $tempFilename, $bytes);
+
+    $config = [
+        'filename' => $filename,
+        'tempFilename' => $tempFilename,
+        'mimeType' => $mimeType,
+    ];
+    $hash = Craft::$app->getSecurity()->hashData($plugin->beamService->hashConfig($config));
+    $location = \craft\helpers\UrlHelper::siteUrl('beam/download', ['hash' => $hash]);
+
+    return compact('location', 'bytes');
+}
+
 beforeEach(function () {
     beamPlugin();
 
@@ -338,18 +358,18 @@ it('redirects XLSX exports with a valid download config', function () {
 });
 
 it('downloads the generated file anonymously with display filename, MIME, and exact body', function (string $format, string $mime) {
-    $export = beamExport($format, new BeamModel([
-        'filename' => 'customer report',
-        'header' => ['Name'],
-        'content' => [['Jane']],
-    ]));
+    $fixture = beamDownloadFixture(
+        "customer report.$format",
+        $mime,
+        "exact $format download bytes",
+    );
 
-    $download = $this->get($export['location']);
+    $download = $this->get($fixture['location']);
 
     $download->assertOk();
     $download->assertDownload("customer report.$format");
     $download->assertHeader('content-type', $mime);
-    expect(beamResponseBytes($download))->toBe($export['bytes']);
+    expect(beamResponseBytes($download))->toBe($fixture['bytes']);
 
     $controller = new DefaultController('default', Beam::$plugin);
     $property = new ReflectionProperty($controller, 'allowAnonymous');
