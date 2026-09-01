@@ -73,8 +73,9 @@ class BeamService extends Component
         // Insert all the rows
         $csv->insertAll($content);
 
-        // @todo Remove this once all plugins is using 9.0
-        $content = method_exists($csv, 'getContent') ? $csv->getContent() : (string)$csv;
+        $content = method_exists($csv, 'toString')
+            ? $csv->toString()
+            : (method_exists($csv, 'getContent') ? $csv->getContent() : (string)$csv);
 
         $this->writeAndRedirect($content, $model->getFilename('csv'), $mimeType);
     }

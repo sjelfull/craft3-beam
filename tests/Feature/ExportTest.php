@@ -1,6 +1,7 @@
 <?php
 
 use craft\helpers\FileHelper;
+use craft\web\Application;
 use League\Csv\Bom;
 use League\Csv\Reader;
 use markhuot\craftpest\web\TestableResponse;
@@ -62,6 +63,9 @@ function beamExport(string $format, BeamModel $model): array
     } catch (ExitException) {
         $exited = true;
     }
+
+    // Simulate the next request after Application::end() set the state to STATE_END.
+    Craft::$app->state = Application::STATE_BEGIN;
 
     expect($exited)->toBeTrue();
     expect($response->getStatusCode())->toBe(302);
