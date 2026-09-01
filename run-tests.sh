@@ -5,8 +5,9 @@ echo "==> Installing dependencies..."
 composer config --no-plugins allow-plugins.yiisoft/yii2-composer true
 composer config --no-plugins allow-plugins.craftcms/plugin-installer true
 composer config --no-plugins allow-plugins.pestphp/pest-plugin true
-composer require "craftcms/cms:^5.0.0" --prefer-dist --no-progress --no-interaction --with-all-dependencies
-composer require --dev "markhuot/craft-pest-core:^3.0" --prefer-dist --no-progress --no-interaction --with-all-dependencies
+composer require "craftcms/cms:^5.0.0" --no-update --no-interaction
+composer require --dev "markhuot/craft-pest-core:^3.0" --no-update --no-interaction
+composer install --prefer-dist --no-progress --no-interaction
 
 echo "==> Setting up config files..."
 mkdir -p ./storage ./config/project ./tests/templates
