@@ -16,8 +16,13 @@ it('registers a beam-temp clear-caches option that empties the Beam temp directo
     expect(Beam::$plugin)->toBeInstanceOf(Beam::class);
     expect(Beam::$plugin->beamService)->toBeInstanceOf(BeamService::class);
 
-    $options = ClearCaches::cacheOptions();
-    $beamOption = collect($options)->firstWhere('key', 'beam-temp');
+    $beamOption = null;
+    foreach (ClearCaches::cacheOptions() as $option) {
+        if (($option['key'] ?? null) === 'beam-temp') {
+            $beamOption = $option;
+            break;
+        }
+    }
 
     expect($beamOption)->not->toBeNull();
     expect($beamOption['action'])->toBeCallable();
