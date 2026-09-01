@@ -418,11 +418,10 @@ Text wrapping is enabled by default to properly display multi-line content. If y
 
 ## Load-balanced environments
 
-If you're running on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), you may experience intermittent download failures when temporary files are stored on the local filesystem.
-
-Configure Craft to use a shared filesystem for temporary files by setting `tempAssetUploadFs` in your `config/general.php`:
+Beam writes export files to Craft's [temp asset upload filesystem](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs) under a `beam/` prefix. On Craft Cloud and any multi-instance or load-balanced host, configure a shared filesystem so the download request can see the file created by the generate request:
 
 ```php
+// config/general.php
 return [
     '*' => [
         'tempAssetUploadFs' => 's3', // use your filesystem handle
@@ -430,9 +429,14 @@ return [
 ];
 ```
 
-Or use the `CRAFT_TEMP_ASSET_UPLOAD_FS` environment variable.
+Or set the `CRAFT_TEMP_ASSET_UPLOAD_FS` environment variable.
 
-See the [Craft documentation](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs) for more details.
+Temp files are **not** deleted automatically. Clear them with:
+
+- **Utilities → Caches → Beam temp files**
+- `php craft clear-caches/beam-temp` (also included in `php craft clear-caches/all`)
+
+Optionally, enable **Delete files after download** under **Settings → Plugins → Beam** (environment variables are supported).
 
 ## About
 
@@ -580,11 +584,10 @@ Text wrapping is enabled by default to properly display multi-line content. If y
 
 ## Load-balanced environments
 
-If you're running on a load-balanced environment (like Fortrabbit, Servd, or Craft Cloud), you may experience intermittent download failures when temporary files are stored on the local filesystem.
-
-Configure Craft to use a shared filesystem for temporary files by setting `tempAssetUploadFs` in your `config/general.php`:
+Beam writes export files to Craft's [temp asset upload filesystem](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs) under a `beam/` prefix. On Craft Cloud and any multi-instance or load-balanced host, configure a shared filesystem so the download request can see the file created by the generate request:
 
 ```php
+// config/general.php
 return [
     '*' => [
         'tempAssetUploadFs' => 's3', // use your filesystem handle
@@ -592,9 +595,14 @@ return [
 ];
 ```
 
-Or use the `CRAFT_TEMP_ASSET_UPLOAD_FS` environment variable.
+Or set the `CRAFT_TEMP_ASSET_UPLOAD_FS` environment variable.
 
-See the [Craft documentation](https://craftcms.com/docs/5.x/reference/config/general.html#tempassetuploadfs) for more details.
+Temp files are **not** deleted automatically. Clear them with:
+
+- **Utilities → Caches → Beam temp files**
+- `php craft clear-caches/beam-temp` (also included in `php craft clear-caches/all`)
+
+Optionally, enable **Delete files after download** under **Settings → Plugins → Beam** (environment variables are supported).
 
 Brought to you by [Superbig](https://superbig.co)
 

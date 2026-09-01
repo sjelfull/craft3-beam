@@ -12,14 +12,14 @@ namespace superbig\beam\services;
 
 use Craft;
 use craft\base\Component;
-use craft\helpers\FileHelper;
+use craft\base\FsInterface;
 use craft\helpers\StringHelper;
 
 use craft\helpers\UrlHelper;
 use League\Csv\Bom;
 use League\Csv\Writer;
-use superbig\beam\Beam;
 use superbig\beam\models\BeamModel;
+use Throwable;
 use XLSXWriter;
 use yii\base\ErrorException;
 use yii\base\Exception;
@@ -34,11 +34,95 @@ use yii\base\InvalidRouteException;
  */
 class BeamService extends Component
 {
+    /**
+     * Directory prefix for Beam objects on the temp asset upload filesystem.
+     */
+    public const TEMP_DIR = 'beam';
+
     public function create($config = [])
     {
         $model = new BeamModel($config);
 
         return $model;
+    }
+
+    /**
+     * Returns Craft's temp asset upload filesystem (shared across instances when configured).
+     *
+     * @throws InvalidConfigException
+     */
+    public function getTempFs(): FsInterface
+    {
+        return Craft::$app->getAssets()->getTempAssetUploadFs();
+    }
+
+    /**
+     * Builds a Beam-prefixed object path on the temp asset upload filesystem.
+     */
+    public function buildTempObjectPath(string $filename): string
+    {
+        return self::TEMP_DIR . '/' . StringHelper::randomString(12) . "-{$filename}";
+    }
+
+    /**
+     * Ensures the Beam temp directory exists on the filesystem.
+     *
+     * @throws InvalidConfigException
+     */
+    public function ensureTempDirectory(): void
+    {
+        $fs = $this->getTempFs();
+
+        if (!$fs->directoryExists(self::TEMP_DIR)) {
+            $fs->createDirectory(self::TEMP_DIR);
+        }
+    }
+
+    /**
+     * Writes export contents to the temp asset upload filesystem.
+     *
+     * @return string The object path (including the beam/ prefix)
+     * @throws InvalidConfigException
+     */
+    public function writeTempFile(string $content, string $filename): string
+    {
+        $this->ensureTempDirectory();
+
+        $path = $this->buildTempObjectPath($filename);
+        $this->getTempFs()->write($path, $content);
+
+        return $path;
+    }
+
+    /**
+     * Deletes all Beam temp objects under the beam/ prefix.
+     *
+     * No-ops when the beam/ directory does not exist. Works for local and remote filesystems.
+     *
+     * @throws InvalidConfigException
+     */
+    public function clearTempFiles(): void
+    {
+        $fs = $this->getTempFs();
+
+        if (!$fs->directoryExists(self::TEMP_DIR)) {
+            return;
+        }
+
+        foreach ($fs->getFileList(self::TEMP_DIR, true) as $listing) {
+            if ($listing->getIsDir()) {
+                continue;
+            }
+
+            try {
+                $fs->deleteFile($listing->getUri());
+            } catch (Throwable $e) {
+                Craft::warning(
+                    "Failed to delete Beam temp file {$listing->getUri()}: {$e->getMessage()}",
+                    __METHOD__
+                );
+            }
+        }
     }
 
     /**
@@ -89,12 +173,6 @@ class BeamService extends Component
      */
     public function xlsx(BeamModel $model): void
     {
-        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
-
-        if (!file_exists($tempPath) && !is_dir($tempPath)) {
-            FileHelper::createDirectory($tempPath);
-        }
-
         $writer = new XLSXWriter();
         $sheetsWritten = 0;
 
@@ -150,11 +228,7 @@ class BeamService extends Component
             return false;
         }
 
-        $config = $this->unhashConfig($hash);
-
-        $config['path'] = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR . $config['tempFilename'];
-
-        return $config;
+        return $this->unhashConfig($hash);
     }
 
     /**
@@ -166,8 +240,7 @@ class BeamService extends Component
      */
     private function writeAndRedirect(string $content, string $filename, string $mimeType): void
     {
-        $tempPath = Craft::$app->path->getTempPath() . DIRECTORY_SEPARATOR . 'beam' . DIRECTORY_SEPARATOR;
-        $tempFilename = StringHelper::randomString(12) . "-{$filename}";
+        $tempFilename = $this->writeTempFile($content, $filename);
         $config = [
             'filename' => $filename,
             'tempFilename' => $tempFilename,
@@ -179,8 +252,6 @@ class BeamService extends Component
         $url = UrlHelper::siteUrl('beam/download', [
             'hash' => $verifyHash,
         ]);
-
-        FileHelper::writeToFile($tempPath . $tempFilename, $content);
 
         Craft::$app->getResponse()->redirect($url);
 

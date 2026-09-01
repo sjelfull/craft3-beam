@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## Unreleased
 
+### Added
+- Beam temp files live on Craft's temp asset upload filesystem, so exports work on Craft Cloud and other multi-instance hosts ([#19](https://github.com/sjelfull/craft3-beam/issues/19))
+- Beam temp files can be cleared from Utilities → Caches and `php craft clear-caches/beam-temp`
+- Optional setting to delete temp files after download
+
 ## 5.0.1 - 2026-09-01
 
 ### Added

@@ -11,11 +11,14 @@
 namespace superbig\beam;
 
 use Craft;
+use craft\base\Model;
 use craft\base\Plugin;
-
+use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterUrlRulesEvent;
+use craft\utilities\ClearCaches;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
+use superbig\beam\models\Settings;
 use superbig\beam\services\BeamService as BeamServiceService;
 use superbig\beam\variables\BeamVariable;
 
@@ -29,6 +32,8 @@ use yii\base\Event;
  * @since     2.0.0
  *
  * @property  BeamServiceService $beamService
+ * @property  Settings $settings
+ * @method    Settings getSettings()
  */
 class Beam extends Plugin
 {
@@ -39,6 +44,11 @@ class Beam extends Plugin
      * @var Beam
      */
     public static $plugin;
+
+    /**
+     * @var bool
+     */
+    public bool $hasCpSettings = true;
 
     // Public Methods
     // =========================================================================
@@ -77,6 +87,19 @@ class Beam extends Plugin
             }
         );
 
+        Event::on(
+            ClearCaches::class,
+            ClearCaches::EVENT_REGISTER_CACHE_OPTIONS,
+            function(RegisterCacheOptionsEvent $event) {
+                $event->options[] = [
+                    'key' => 'beam-temp',
+                    'label' => Craft::t('beam', 'Beam temp files'),
+                    'info' => Craft::t('beam', 'CSV and XLSX files written during exports'),
+                    'action' => [$this->beamService, 'clearTempFiles'],
+                ];
+            }
+        );
+
         Craft::info(
             Craft::t(
                 'beam',
@@ -84,6 +107,30 @@ class Beam extends Plugin
                 ['name' => $this->name]
             ),
             __METHOD__
+        );
+    }
+
+    // Protected Methods
+    // =========================================================================
+
+    /**
+     * @inheritdoc
+     */
+    protected function createSettingsModel(): ?Model
+    {
+        return new Settings();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function settingsHtml(): ?string
+    {
+        return Craft::$app->getView()->renderTemplate(
+            'beam/settings',
+            [
+                'settings' => $this->getSettings(),
+            ]
         );
     }
 }
