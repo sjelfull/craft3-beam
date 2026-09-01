@@ -1,0 +1,5 @@
+{
+  "name": "Superbig Beam",
+  "install": "sudo service docker start && docker compose build && composer install --no-interaction --no-progress",
+  "start": "sudo service docker start && docker compose up -d"
+}

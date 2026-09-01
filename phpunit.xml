@@ -6,6 +6,7 @@
 >
     <testsuites>
         <testsuite name="Feature">
+            <file>tests/BootstrapTest.php</file>
             <directory>tests/Feature</directory>
         </testsuite>
         <testsuite name="Unit">
