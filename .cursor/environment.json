@@ -1,5 +1,5 @@
 {
   "name": "Superbig Beam",
-  "install": "./scripts/start-docker.sh && docker compose build && composer install --no-interaction --no-progress",
-  "start": "./scripts/start-docker.sh && docker compose up -d"
+  "install": "./scripts/start-docker.sh && docker compose down -v --remove-orphans && docker compose build && composer install --no-interaction --no-progress",
+  "start": "./scripts/start-docker.sh && docker compose down -v --remove-orphans && docker compose up -d"
 }
