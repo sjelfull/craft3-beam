@@ -6,12 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## Unreleased
 
+## 5.0.1 - 2026-09-01
+
 ### Added
 - Added support for multiple sheets in Excel (XLSX) exports
 - Added soft newline support in XLSX cells with automatic text wrapping
 
 ### Fixed
-- Fixed a fatal error on PHP 8.2+ when exporting a file whose filename contains special characters (`FILTER_SANITIZE_STRING` was removed; `getFilename()` now uses `FileHelper::sanitizeFilename`) ([#25](https://github.com/sjelfull/craft3-beam/issues/25))
+- Fixed a fatal error on PHP 8.2+ when exporting a file whose filename contains special characters (`FILTER_SANITIZE_STRING` was removed; `getFilename()` now uses `FileHelper::sanitizeFilename()`) ([#25](https://github.com/sjelfull/craft3-beam/issues/25))
 
 ## 5.0.0 - 2024-04-23
 
