@@ -11,6 +11,7 @@
 namespace superbig\beam\models;
 
 use craft\base\Model;
+use craft\helpers\FileHelper;
 
 use superbig\beam\Beam;
 
@@ -112,7 +113,9 @@ class BeamModel extends Model
 
     public function getFilename($ext = null)
     {
-        $filename = pathinfo(preg_replace('/[\x00-\x1F\x7F]/', '', $this->filename), PATHINFO_FILENAME);
+        $filename = FileHelper::sanitizeFilename(pathinfo($this->filename, PATHINFO_FILENAME), [
+            'separator' => null,
+        ]);
 
         return "$filename.$ext";
     }

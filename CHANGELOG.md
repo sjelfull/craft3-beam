@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Added soft newline support in XLSX cells with automatic text wrapping
 
 ### Fixed
-- Fixed fatal error in `BeamModel::getFilename()` on PHP 8.2+ caused by removed `FILTER_SANITIZE_STRING` ([#25](https://github.com/sjelfull/craft3-beam/issues/25))
+- Fixed fatal error in `BeamModel::getFilename()` on PHP 8.2+ caused by removed `FILTER_SANITIZE_STRING`; filenames are now sanitized with Craft’s `FileHelper::sanitizeFilename()` ([#25](https://github.com/sjelfull/craft3-beam/issues/25))
 
 ## 5.0.0 - 2024-04-23
 
