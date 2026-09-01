@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Added
 - Added support for multiple sheets in Excel (XLSX) exports
 - Added soft newline support in XLSX cells with automatic text wrapping
-- Added a Pest test suite (`markhuot/craft-pest-core`) covering filename sanitization and model config
+- Added a Pest test suite (`markhuot/craft-pest-core`) covering filename sanitization, generated CSV/XLSX files, and downloads
 - Run Pest CI on PHP 8.2–8.5 (MySQL and PostgreSQL)
 
 ### Fixed
