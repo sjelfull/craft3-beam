@@ -5,6 +5,16 @@
 
 # COMPOSER
 /vendor
+composer.lock
+
+# TEST/CI FILES
+.phpunit.cache
+/storage
+/config/app.php
+/config/general.php
+/config/db.php
+/config/project
+/config/license.key
 
 # BUILD FILES
 /bower_components/*

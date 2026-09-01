@@ -16,6 +16,7 @@ use craft\helpers\FileHelper;
 use craft\helpers\StringHelper;
 
 use craft\helpers\UrlHelper;
+use League\Csv\Bom;
 use League\Csv\Writer;
 use superbig\beam\Beam;
 use superbig\beam\models\BeamModel;
@@ -55,8 +56,12 @@ class BeamService extends Component
             return;
         }
 
-        $csv = Writer::createFromString('');
-        $csv->setOutputBOM(Writer::BOM_UTF8);
+        $csv = method_exists(Writer::class, 'fromString')
+            ? Writer::fromString('')
+            : Writer::createFromString('');
+        $csv->setOutputBOM(
+            enum_exists(Bom::class) ? Bom::Utf8->value : Writer::BOM_UTF8
+        );
 
         if (!empty($header)) {
             $headerValues = array_map(fn($value) => is_array($value) ? $value['text'] ?? 'No text set' : $value, $header);
@@ -68,8 +73,9 @@ class BeamService extends Component
         // Insert all the rows
         $csv->insertAll($content);
 
-        // @todo Remove this once all plugins is using 9.0
-        $content = method_exists($csv, 'getContent') ? $csv->getContent() : (string)$csv;
+        $content = method_exists($csv, 'toString')
+            ? $csv->toString()
+            : (method_exists($csv, 'getContent') ? $csv->getContent() : (string)$csv);
 
         $this->writeAndRedirect($content, $model->getFilename('csv'), $mimeType);
     }
