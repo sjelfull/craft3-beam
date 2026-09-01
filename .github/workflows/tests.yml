@@ -36,6 +36,7 @@ jobs:
       CRAFT_DB_DATABASE: pest
       CRAFT_DB_USER: root
       CRAFT_DB_PASSWORD: root
+      CRAFT_DB_SCHEMA: ${{ matrix.database == 'postgres' && 'public' || '' }}
       CRAFT_DB_TABLE_PREFIX: craft_
       CRAFT_TEMPLATES_PATH: ./tests/templates
       CRAFT_TIMEZONE: UTC
