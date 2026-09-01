@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - cursor/fix-filter-sanitize-string-e978
 
 permissions:
   contents: read
@@ -82,7 +81,7 @@ jobs:
           path: |
             composer.lock
             vendor
-          key: ${{ runner.os }}-craft5-vendor-${{ hashFiles('composer.json') }}
+          key: ${{ runner.os }}-php${{ matrix.php }}-${{ matrix.database }}-craft5-vendor-${{ hashFiles('composer.json') }}
 
       - name: Configure Composer plugins
         run: |
