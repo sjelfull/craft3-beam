@@ -39,9 +39,13 @@ it('round-trips hashed download config', function () {
     $service = new BeamService();
     $payload = [
         'filename' => 'sales.csv',
-        'tempFilename' => 'abc-sales.csv',
+        'tempFilename' => 'beam/abc-sales.csv',
         'mimeType' => 'text/csv',
     ];
 
     expect($service->unhashConfig($service->hashConfig($payload)))->toBe($payload);
+});
+
+it('exposes a stable beam temp directory prefix', function () {
+    expect(BeamService::TEMP_DIR)->toBe('beam');
 });

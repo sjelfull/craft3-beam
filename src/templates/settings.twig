@@ -1,0 +1,10 @@
+{% import "_includes/forms" as forms %}
+
+{{ forms.booleanMenuField({
+    label: 'Delete files after download'|t('beam'),
+    instructions: 'Automatically delete temporary CSV/XLSX files after they are downloaded. When disabled, clear them via Utilities → Caches → Beam temp files, or run `php craft clear-caches/beam-temp`.'|t('beam'),
+    id: 'deleteFilesAfterDownload',
+    name: 'deleteFilesAfterDownload',
+    includeEnvVars: true,
+    value: settings.deleteFilesAfterDownload,
+}) }}

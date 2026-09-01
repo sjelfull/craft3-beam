@@ -1,6 +1,7 @@
 <?php
 
-use craft\helpers\FileHelper;
+use craft\helpers\App;
+use craft\utilities\ClearCaches;
 use craft\web\Application;
 use League\Csv\Bom;
 use League\Csv\Reader;
@@ -8,15 +9,11 @@ use markhuot\craftpest\web\TestableResponse;
 use superbig\beam\Beam;
 use superbig\beam\controllers\DefaultController;
 use superbig\beam\models\BeamModel;
+use superbig\beam\models\Settings;
 use superbig\beam\services\BeamService;
 use yii\base\ExitException;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
-
-function beamTempPath(): string
-{
-    return Craft::$app->getPath()->getTempPath() . DIRECTORY_SEPARATOR . 'beam';
-}
 
 function beamPlugin(): Beam
 {
@@ -43,12 +40,21 @@ function beamResetResponse(): TestableResponse
     return $response;
 }
 
+function beamResetSettings(bool $deleteFilesAfterDownload = false): Settings
+{
+    $plugin = beamPlugin();
+    $settings = $plugin->getSettings();
+    $settings->deleteFilesAfterDownload = $deleteFilesAfterDownload;
+
+    return $settings;
+}
+
 /**
  * @return array{
  *   response: TestableResponse,
  *   location: string,
  *   hash: string,
- *   config: array{filename: string, tempFilename: string, mimeType: string, path: string},
+ *   config: array{filename: string, tempFilename: string, mimeType: string},
  *   bytes: string
  * }
  */
@@ -80,9 +86,12 @@ function beamExport(string $format, BeamModel $model): array
     $config = $plugin->beamService->downloadHash($hash);
     expect($config)->toBeArray();
     expect($config['tempFilename'])->not->toBe($config['filename']);
-    expect(is_file($config['path']))->toBeTrue();
+    expect($config['tempFilename'])->toStartWith(BeamService::TEMP_DIR . '/');
 
-    $bytes = file_get_contents($config['path']);
+    $fs = $plugin->beamService->getTempFs();
+    expect($fs->fileExists($config['tempFilename']))->toBeTrue();
+
+    $bytes = $fs->read($config['tempFilename']);
     expect($bytes)->toBeString();
 
     return compact('response', 'location', 'hash', 'config', 'bytes');
@@ -91,8 +100,12 @@ function beamExport(string $format, BeamModel $model): array
 /**
  * @return array<string, string>
  */
-function beamXlsxEntries(string $path): array
+function beamXlsxEntriesFromBytes(string $bytes): array
 {
+    $path = tempnam(sys_get_temp_dir(), 'beam-xlsx-');
+    expect($path)->toBeString();
+    file_put_contents($path, $bytes);
+
     $zip = new ZipArchive();
     expect($zip->open($path))->toBeTrue();
 
@@ -110,6 +123,7 @@ function beamXlsxEntries(string $path): array
     }
 
     $zip->close();
+    unlink($path);
 
     return $entries;
 }
@@ -155,27 +169,39 @@ function beamXlsxSheetNames(string $workbookXml): array
 
 function beamResponseBytes(TestableResponse $response): string
 {
-    expect($response->stream)->toBeArray();
+    if (is_array($response->stream)) {
+        [$handle, $begin, $end] = $response->stream;
+        expect(is_resource($handle))->toBeTrue();
+        fseek($handle, $begin);
+        $bytes = stream_get_contents($handle, $end - $begin + 1);
+        fclose($handle);
+        expect($bytes)->toBeString();
 
-    [$handle, $begin, $end] = $response->stream;
-    expect(is_resource($handle))->toBeTrue();
-    fseek($handle, $begin);
-    $bytes = stream_get_contents($handle, $end - $begin + 1);
-    fclose($handle);
+        return $bytes;
+    }
 
-    expect($bytes)->toBeString();
+    if (is_resource($response->stream)) {
+        rewind($response->stream);
+        $bytes = stream_get_contents($response->stream);
+        expect($bytes)->toBeString();
 
-    return $bytes;
+        return $bytes;
+    }
+
+    expect($response->content)->toBeString();
+
+    return $response->content;
 }
 
 /**
- * @return array{location: string, bytes: string}
+ * @return array{location: string, bytes: string, tempFilename: string}
  */
 function beamDownloadFixture(string $filename, string $mimeType, string $bytes): array
 {
     $plugin = beamPlugin();
-    $tempFilename = 'fixture-' . $filename;
-    FileHelper::writeToFile(beamTempPath() . DIRECTORY_SEPARATOR . $tempFilename, $bytes);
+    $tempFilename = BeamService::TEMP_DIR . '/fixture-' . $filename;
+    $plugin->beamService->ensureTempDirectory();
+    $plugin->beamService->getTempFs()->write($tempFilename, $bytes);
 
     $config = [
         'filename' => $filename,
@@ -185,19 +211,20 @@ function beamDownloadFixture(string $filename, string $mimeType, string $bytes):
     $hash = Craft::$app->getSecurity()->hashData($plugin->beamService->hashConfig($config));
     $location = \craft\helpers\UrlHelper::siteUrl('beam/download', ['hash' => $hash]);
 
-    return compact('location', 'bytes');
+    return compact('location', 'bytes', 'tempFilename');
+}
+
+function beamFireAfterRequest(): void
+{
+    if (Craft::$app->hasEventHandlers(Application::EVENT_AFTER_REQUEST)) {
+        Craft::$app->trigger(Application::EVENT_AFTER_REQUEST);
+    }
 }
 
 beforeEach(function () {
     beamPlugin();
-
-    $tempPath = beamTempPath();
-    if (is_dir($tempPath)) {
-        FileHelper::clearDirectory($tempPath);
-    } else {
-        FileHelper::createDirectory($tempPath);
-    }
-
+    beamResetSettings(false);
+    beamPlugin()->beamService->clearTempFiles();
     beamResetResponse();
 });
 
@@ -243,7 +270,7 @@ it('writes a single-sheet XLSX with exact header and cell values', function () {
     ]);
 
     $export = beamExport('xlsx', $model);
-    $entries = beamXlsxEntries($export['config']['path']);
+    $entries = beamXlsxEntriesFromBytes($export['bytes']);
 
     expect($entries)->toHaveKeys([
         '[Content_Types].xml',
@@ -276,7 +303,7 @@ it('writes two XLSX sheets with their own rows', function () {
     ]);
 
     $export = beamExport('xlsx', $model);
-    $entries = beamXlsxEntries($export['config']['path']);
+    $entries = beamXlsxEntriesFromBytes($export['bytes']);
 
     expect(beamXlsxSheetNames($entries['xl/workbook.xml']))->toBe(['North', 'South']);
     expect(beamXlsxRows($entries['xl/worksheets/sheet1.xml']))->toBe([
@@ -301,7 +328,7 @@ it('reflects sanitized and truncated sheet names in the workbook', function () {
     ]);
 
     $export = beamExport('xlsx', $model);
-    $entries = beamXlsxEntries($export['config']['path']);
+    $entries = beamXlsxEntriesFromBytes($export['bytes']);
 
     expect(beamXlsxSheetNames($entries['xl/workbook.xml']))->toBe([$expected]);
 });
@@ -315,7 +342,7 @@ it('writes soft newlines and wrap-text styles into XLSX XML', function () {
     ]);
 
     $export = beamExport('xlsx', $model);
-    $entries = beamXlsxEntries($export['config']['path']);
+    $entries = beamXlsxEntriesFromBytes($export['bytes']);
 
     expect(beamXlsxRows($entries['xl/worksheets/sheet1.xml']))->toBe([
         ['Notes'],
@@ -326,14 +353,25 @@ it('writes soft newlines and wrap-text styles into XLSX XML', function () {
 
 it('does not write or redirect for empty exports', function (string $format) {
     $response = beamResetResponse();
+    $fs = Beam::$plugin->beamService->getTempFs();
 
     Beam::$plugin->beamService->{$format}(new BeamModel());
 
     expect($response->getHeaders()->has('location'))->toBeFalse();
-    expect(glob(beamTempPath() . DIRECTORY_SEPARATOR . '*') ?: [])->toBe([]);
+
+    $files = [];
+    if ($fs->directoryExists(BeamService::TEMP_DIR)) {
+        foreach ($fs->getFileList(BeamService::TEMP_DIR, true) as $listing) {
+            if (!$listing->getIsDir()) {
+                $files[] = $listing->getUri();
+            }
+        }
+    }
+
+    expect($files)->toBe([]);
 })->with(['csv', 'xlsx']);
 
-it('redirects CSV exports to a signed site download URL', function () {
+it('redirects CSV exports to a signed site download URL on the temp asset upload FS', function () {
     $export = beamExport('csv', new BeamModel([
         'filename' => 'display name',
         'content' => [['value']],
@@ -343,6 +381,7 @@ it('redirects CSV exports to a signed site download URL', function () {
     expect($location['path'])->toBe('/beam/download');
     expect($export['config']['filename'])->toBe('display name.csv');
     expect($export['config']['mimeType'])->toBe('text/csv');
+    expect($export['config']['tempFilename'])->toMatch('#^beam/[A-Za-z0-9]+-display name\.csv$#');
     expect(Craft::$app->getSecurity()->validateData($export['hash']))->not->toBeFalse();
 });
 
@@ -355,6 +394,7 @@ it('redirects XLSX exports with a valid download config', function () {
     expect(parse_url($export['location'], PHP_URL_PATH))->toBe('/beam/download');
     expect($export['config']['filename'])->toBe('report.xlsx');
     expect($export['config']['mimeType'])->toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    expect($export['config']['tempFilename'])->toStartWith('beam/');
 });
 
 it('downloads the generated file anonymously with display filename, MIME, and exact body', function (string $format, string $mime) {
@@ -379,15 +419,94 @@ it('downloads the generated file anonymously with display filename, MIME, and ex
     'xlsx' => ['xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
 ]);
 
+it('keeps the temp file after download when delete-after-download is disabled', function () {
+    beamResetSettings(false);
+    $fixture = beamDownloadFixture('keep.csv', 'text/csv', 'keep-me');
+
+    $download = $this->get($fixture['location']);
+    $download->assertOk();
+    beamFireAfterRequest();
+
+    expect(Beam::$plugin->beamService->getTempFs()->fileExists($fixture['tempFilename']))->toBeTrue();
+});
+
+it('deletes the temp file after download when delete-after-download is enabled', function () {
+    beamResetSettings(true);
+    $fixture = beamDownloadFixture('remove.csv', 'text/csv', 'remove-me');
+
+    $download = $this->get($fixture['location']);
+    $download->assertOk();
+    beamFireAfterRequest();
+
+    expect(Beam::$plugin->beamService->getTempFs()->fileExists($fixture['tempFilename']))->toBeFalse();
+});
+
+it('registers a Clear Caches option that removes beam/ temp objects', function () {
+    $plugin = beamPlugin();
+    $fs = $plugin->beamService->getTempFs();
+    $plugin->beamService->ensureTempDirectory();
+    $dummyPath = BeamService::TEMP_DIR . '/clear-me.csv';
+    $fs->write($dummyPath, 'dummy');
+
+    $options = ClearCaches::cacheOptions();
+    $beamOption = null;
+    foreach ($options as $option) {
+        if (($option['key'] ?? null) === 'beam-temp') {
+            $beamOption = $option;
+            break;
+        }
+    }
+
+    expect($beamOption)->not->toBeNull();
+    expect($beamOption['label'])->toBe('Beam temp files');
+    expect($beamOption['info'])->toBe('CSV and XLSX files written during exports');
+    expect($beamOption['action'])->toBeCallable();
+
+    ($beamOption['action'])();
+
+    expect($fs->fileExists($dummyPath))->toBeFalse();
+});
+
+it('no-ops clearTempFiles when the beam directory is missing', function () {
+    $plugin = beamPlugin();
+    $fs = $plugin->beamService->getTempFs();
+
+    if ($fs->directoryExists(BeamService::TEMP_DIR)) {
+        foreach ($fs->getFileList(BeamService::TEMP_DIR, true) as $listing) {
+            if (!$listing->getIsDir()) {
+                $fs->deleteFile($listing->getUri());
+            }
+        }
+        $fs->deleteDirectory(BeamService::TEMP_DIR);
+    }
+
+    expect(fn() => $plugin->beamService->clearTempFiles())->not->toThrow(Throwable::class);
+});
+
 it('rejects a tampered or unsigned download hash', function (string $hash) {
     expect(fn() => $this->get('/beam/download?hash=' . urlencode($hash)))
         ->toThrow(NotFoundHttpException::class);
 })->with([
     'tampered' => fn() => Craft::$app->getSecurity()->hashData('payload') . 'tampered',
-    'unsigned' => fn() => base64_encode('report.csv||random-report.csv||text/csv'),
+    'unsigned' => fn() => base64_encode('report.csv||beam/random-report.csv||text/csv'),
 ]);
 
 it('rejects a download request without a hash', function () {
     expect(fn() => $this->get('/beam/download'))
         ->toThrow(BadRequestHttpException::class);
+});
+
+it('parses env-aware delete-after-download settings', function () {
+    $settings = new Settings();
+    $settings->deleteFilesAfterDownload = false;
+    expect($settings->getDeleteFilesAfterDownload())->toBeFalse();
+
+    $settings->deleteFilesAfterDownload = true;
+    expect($settings->getDeleteFilesAfterDownload())->toBeTrue();
+
+    putenv('BEAM_DELETE_FILES_TEST=true');
+    $_ENV['BEAM_DELETE_FILES_TEST'] = 'true';
+    $settings->deleteFilesAfterDownload = '$BEAM_DELETE_FILES_TEST';
+    expect(App::parseBooleanEnv($settings->deleteFilesAfterDownload))->toBeTrue();
+    expect($settings->getDeleteFilesAfterDownload())->toBeTrue();
 });
