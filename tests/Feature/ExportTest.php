@@ -114,18 +114,18 @@ function beamXlsxEntries(string $path): array
  */
 function beamXlsxRows(string $worksheetXml): array
 {
-    $xml = simplexml_load_string($worksheetXml);
-    expect($xml)->not->toBeFalse();
-    $xml->registerXPathNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+    $document = new DOMDocument();
+    expect($document->loadXML($worksheetXml))->toBeTrue();
+    $xpath = new DOMXPath($document);
+    $xpath->registerNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
 
     $rows = [];
-    foreach ($xml->xpath('//x:sheetData/x:row') ?: [] as $row) {
+    foreach ($xpath->query('//x:sheetData/x:row') ?: [] as $row) {
         $values = [];
-        foreach ($row->xpath('./x:c') ?: [] as $cell) {
-            $inlineString = $cell->xpath('./x:is/x:t');
-            $values[] = $inlineString !== false && isset($inlineString[0])
-                ? (string)$inlineString[0]
-                : (string)$cell->v;
+        foreach ($xpath->query('./x:c', $row) ?: [] as $cell) {
+            $inlineString = $xpath->query('./x:is/x:t', $cell)?->item(0);
+            $value = $xpath->query('./x:v', $cell)?->item(0);
+            $values[] = $inlineString?->textContent ?? $value?->textContent ?? '';
         }
         $rows[] = $values;
     }
@@ -265,7 +265,7 @@ it('writes two XLSX sheets with their own rows', function () {
 
 it('reflects sanitized and truncated sheet names in the workbook', function () {
     $sheetName = 'Bad\\/?*[]: Name That Is Much Too Long For Excel';
-    $expected = mb_substr(str_replace(['\\', '/', '?', '*', '[', ']', ':'], '', $sheetName), 0, 31);
+    $expected = trim(mb_substr(str_replace(['\\', '/', '?', '*', '[', ']', ':'], '', $sheetName), 0, 31));
     $model = new BeamModel([
         'filename' => 'sheet-name',
         'sheets' => [[
@@ -347,7 +347,7 @@ it('downloads the generated file anonymously with display filename, MIME, and ex
 
     $controller = new DefaultController('default', Beam::$plugin);
     $property = new ReflectionProperty($controller, 'allowAnonymous');
-    expect($property->getValue($controller))->toContain('index');
+    expect($property->getValue($controller))->toHaveKey('index');
 })->with([
     'csv' => ['csv', 'text/csv'],
     'xlsx' => ['xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
