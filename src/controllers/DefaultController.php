@@ -54,9 +54,7 @@ class DefaultController extends Controller
         if (Beam::$plugin->getSettings()->getDeleteFilesAfterDownload()) {
             Craft::$app->onAfterRequest(function() use ($fs, $tempFilename) {
                 try {
-                    if ($fs->fileExists($tempFilename)) {
-                        $fs->deleteFile($tempFilename);
-                    }
+                    $fs->deleteFile($tempFilename);
                 } catch (Throwable $e) {
                     Craft::warning(
                         "Failed to delete temporary Beam file {$tempFilename}: {$e->getMessage()}",
