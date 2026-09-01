@@ -6,6 +6,7 @@ use markhuot\craftpest\web\TestableResponse;
 use superbig\beam\Beam;
 use superbig\beam\controllers\DefaultController;
 use superbig\beam\models\BeamModel;
+use superbig\beam\services\BeamService;
 use yii\base\ExitException;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
@@ -13,6 +14,23 @@ use yii\web\NotFoundHttpException;
 function beamTempPath(): string
 {
     return Craft::$app->getPath()->getTempPath() . DIRECTORY_SEPARATOR . 'beam';
+}
+
+function beamPlugin(): Beam
+{
+    $plugins = Craft::$app->getPlugins();
+
+    if (!$plugins->isPluginInstalled('beam')) {
+        $plugins->installPlugin('beam');
+    } elseif (!$plugins->isPluginEnabled('beam')) {
+        $plugins->enablePlugin('beam');
+    }
+
+    $plugin = $plugins->getPlugin('beam');
+    expect($plugin)->toBeInstanceOf(Beam::class);
+    expect($plugin->beamService)->toBeInstanceOf(BeamService::class);
+
+    return $plugin;
 }
 
 function beamResetResponse(): TestableResponse
@@ -34,11 +52,12 @@ function beamResetResponse(): TestableResponse
  */
 function beamExport(string $format, BeamModel $model): array
 {
+    $plugin = beamPlugin();
     $response = beamResetResponse();
     $exited = false;
 
     try {
-        Beam::$plugin->beamService->{$format}($model);
+        $plugin->beamService->{$format}($model);
     } catch (ExitException) {
         $exited = true;
     }
@@ -53,7 +72,7 @@ function beamExport(string $format, BeamModel $model): array
     expect($query)->toHaveKey('hash');
 
     $hash = $query['hash'];
-    $config = Beam::$plugin->beamService->downloadHash($hash);
+    $config = $plugin->beamService->downloadHash($hash);
     expect($config)->toBeArray();
     expect($config['tempFilename'])->not->toBe($config['filename']);
     expect(is_file($config['path']))->toBeTrue();
@@ -144,6 +163,8 @@ function beamResponseBytes(TestableResponse $response): string
 }
 
 beforeEach(function () {
+    beamPlugin();
+
     $tempPath = beamTempPath();
     if (is_dir($tempPath)) {
         FileHelper::clearDirectory($tempPath);
