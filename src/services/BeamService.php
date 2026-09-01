@@ -55,7 +55,9 @@ class BeamService extends Component
             return;
         }
 
-        $csv = Writer::createFromString('');
+        $csv = method_exists(Writer::class, 'fromString')
+            ? Writer::fromString('')
+            : Writer::createFromString('');
         $csv->setOutputBOM(Writer::BOM_UTF8);
 
         if (!empty($header)) {

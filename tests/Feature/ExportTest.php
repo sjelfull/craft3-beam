@@ -156,6 +156,7 @@ function beamResponseBytes(TestableResponse $response): string
     expect(is_resource($handle))->toBeTrue();
     fseek($handle, $begin);
     $bytes = stream_get_contents($handle, $end - $begin + 1);
+    fclose($handle);
 
     expect($bytes)->toBeString();
 
@@ -194,7 +195,7 @@ it('writes a parseable CSV with a BOM, formatted headers, commas, and newlines',
     expect($export['bytes'])->toContain('"Doe, Jane"');
     expect($export['bytes'])->toContain("\"Line one\nLine two\"");
 
-    $reader = Reader::createFromString($export['bytes']);
+    $reader = Reader::fromString($export['bytes']);
     expect(iterator_to_array($reader->getRecords(), false))->toBe([
         ['Name', 'Notes'],
         ['Doe, Jane', "Line one\nLine two"],
